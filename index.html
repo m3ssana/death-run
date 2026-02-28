@@ -218,7 +218,7 @@ function spawnSoul() {
 
 // -- 3D perspective floor --
 function drawFloor() {
-  const scrollOff = (frameCount * speed * 2) % 60;
+  const scrollOff = (frameCount * (speed || 1) * 2) % 60;
   for (let row = 0; row < H - HORIZON; row++) {
     const t = row / (H - HORIZON);
     const y = HORIZON + row;
@@ -288,7 +288,7 @@ function drawFloor() {
 
 // -- 3D perspective ceiling --
 function drawCeiling() {
-  const scrollOff = (frameCount * speed * 2) % 60;
+  const scrollOff = (frameCount * (speed || 1) * 2) % 60;
   for (let row = 0; row < HORIZON; row++) {
     const t = 1 - row / HORIZON; // 0=horizon, 1=top
     const brightness = Math.floor(lerp(5, 20, t * t));
