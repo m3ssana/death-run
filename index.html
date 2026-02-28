@@ -86,11 +86,11 @@ const bctx = bloomCanvas.getContext('2d');
 const W = 900, H = 650;
 
 // Perspective constants
-const HORIZON = 180;        // y-line of the horizon
-const FLOOR_TOP = HORIZON;  // where the 3D floor starts
-const CEIL_BOT = HORIZON;   // where the 3D ceiling ends
-const VP_X = W / 2;         // vanishing point X
-const VP_Y = HORIZON;       // vanishing point Y
+const HORIZON = 55;         // y-line of the horizon (pushed up so full canvas is playable)
+const FLOOR_TOP = HORIZON;
+const CEIL_BOT = HORIZON;
+const VP_X = W / 2;
+const VP_Y = HORIZON;
 
 // ---- state ----
 let state = 'title';
@@ -109,8 +109,8 @@ function generateMountains() {
     const pts = [];
     const segW = 30 + layer * 20;
     for (let x = 0; x <= W + segW; x += segW) {
-      const baseH = 40 + layer * 25;
-      pts.push({ x, y: HORIZON - baseH - Math.random() * (50 - layer * 12) });
+      const baseH = 15 + layer * 10;
+      pts.push({ x, y: HORIZON - baseH - Math.random() * (20 - layer * 5) });
     }
     mountainLayers.push({ pts, speed: 0.15 + layer * 0.1, offset: 0, color: layer });
   }
@@ -134,23 +134,22 @@ function lerp(a, b, t) { return a + (b - a) * t; }
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 function rand(a, b) { return a + Math.random() * (b - a); }
 
-// Map a world-y (play area y: 0 = top of play zone, 1 = bottom) to screen position
-// The play area is between HORIZON and H. Objects at y=HORIZON are far away, objects at y=H are close.
+// Map game coordinates to screen with mild perspective.
+// Play area spans full canvas. Objects near the top are slightly smaller (depth feel).
 function worldToScreen(wx, wy) {
-  // wy is the raw game y (20..H-35). Map it into the play area.
-  const t = (wy - 20) / (H - 55); // 0..1
-  const sy = lerp(HORIZON + 20, H - 10, t);
-  // Perspective X: objects near horizon converge to VP_X
-  const depth = 1 - (sy - HORIZON) / (H - HORIZON); // 1=far, 0=near
-  const sx = lerp(wx, VP_X, depth * 0.45);
-  const scale = lerp(1.0, 0.25, depth);
+  const t = clamp((wy - 20) / (H - 55), 0, 1); // 0=top, 1=bottom
+  const sy = lerp(30, H - 10, t);
+  // Mild perspective: top-of-screen objects converge slightly toward center
+  const depth = 1 - t; // 1=far (top), 0=near (bottom)
+  const sx = lerp(wx, VP_X, depth * 0.2);
+  const scale = lerp(1.0, 0.55, depth);
   return { sx, sy, scale, depth };
 }
 
 // ---- game funcs ----
 function startGame() {
   state = 'playing';
-  player = { x: 200, y: H / 2 + 50, w: 24, h: 32, vy: 0, trail: [], lean: 0 };
+  player = { x: 200, y: H / 2, w: 24, h: 32, vy: 0, trail: [], lean: 0 };
   obstacles = []; souls = []; particles = []; bgParticles = []; lightSources = [];
   distance = 0; soulCount = 0; demonsDodged = 0; combo = 0; maxCombo = 0;
   speed = 3; dashCooldown = 0; invincible = 0; frameCount = 0;
@@ -200,16 +199,16 @@ function spawnObstacle() {
   const count = 1 + (Math.random() < diff ? 1 : 0);
   for (let i = 0; i < count; i++) {
     const type = OBSTACLE_TYPES[Math.floor(Math.random() * OBSTACLE_TYPES.length)];
-    const o = { x: W + 60 + i * 130, y: rand(HORIZON + 60, H - 60), w: type.w, h: type.h, type, angle: 0, sinOffset: rand(0, Math.PI*2), passed: false };
+    const o = { x: W + 60 + i * 130, y: rand(60, H - 60), w: type.w, h: type.h, type, angle: 0, sinOffset: rand(0, Math.PI*2), passed: false };
     if (type.pattern === 'saw') o.vy = (Math.random()>0.5?1:-1) * (2 + diff*2.5);
-    else if (type.pattern === 'chain') o.y = rand(HORIZON + 80, H - 80);
+    else if (type.pattern === 'chain') o.y = rand(80, H - 80);
     else if (type.pattern === 'skull') o.homing = diff > 0.4 && Math.random() > 0.5;
     obstacles.push(o);
   }
 }
 
 function spawnSoul() {
-  souls.push({ x: W + 20, y: rand(HORIZON + 60, H - 60), size: 14, pulse: 0, collected: false });
+  souls.push({ x: W + 20, y: rand(60, H - 60), size: 14, pulse: 0, collected: false });
 }
 
 // ============================================================
@@ -927,7 +926,7 @@ function update() {
   player.vy *= 0.92;
   player.y += player.vy;
   player.x = clamp(player.x, 30, W - 30);
-  if (player.y < HORIZON + 40) { player.y = HORIZON + 40; player.vy = 0; }
+  if (player.y < 30) { player.y = 30; player.vy = 0; }
   if (player.y > H - 35) { player.y = H - 35; player.vy = 0; }
 
   player.trail.push({ x: player.x, y: player.y });
@@ -943,7 +942,7 @@ function update() {
   for (let i = obstacles.length - 1; i >= 0; i--) {
     const o = obstacles[i];
     o.x -= speed;
-    if (o.type.pattern === 'saw' && o.vy) { o.y += o.vy; if (o.y < HORIZON + 40 || o.y > H - 30) o.vy *= -1; }
+    if (o.type.pattern === 'saw' && o.vy) { o.y += o.vy; if (o.y < 40 || o.y > H - 30) o.vy *= -1; }
     if (o.homing) o.y += (player.y - o.y) * 0.02;
     if (invincible === 0) {
       const hb = getObstacleHitbox(o);
@@ -1222,7 +1221,7 @@ function drawTitleBG() {
   const t = Date.now() * 0.001;
   for (let i = 0; i < 6; i++) {
     const sx = (W * (i/6) + t * 20) % (W+80) - 40;
-    const sy = HORIZON + 80 + Math.sin(t + i*1.5) * 80;
+    const sy = H/2 + Math.sin(t + i*1.5) * 150;
     const s = worldToScreen(sx, sy);
     drawSkull3D(s.sx, s.sy, 40 * s.scale, '#ff0033', 0.05);
   }
