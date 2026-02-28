@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEATH.RUN — Escape Hell</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Press+Start+2P&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: 'Press Start 2P', monospace;
+  }
+
+  canvas {
+    border: 2px solid #ff0033;
+    box-shadow: 0 0 30px rgba(255, 0, 51, 0.5), inset 0 0 30px rgba(255, 0, 51, 0.1);
+    image-rendering: pixelated;
+  }
+
+  #ui-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #title-screen, #death-screen {
+    pointer-events: auto;
+    text-align: center;
+    color: #ff0033;
+    text-shadow: 0 0 20px rgba(255, 0, 51, 0.8);
+  }
+
+  #title-screen h1 {
+    font-family: 'Creepster', cursive;
+    font-size: 72px;
+    letter-spacing: 8px;
+    animation: flicker 3s infinite;
+    margin-bottom: 10px;
+  }
+
+  #title-screen .subtitle {
+    font-size: 11px;
+    color: #cc0000;
+    margin-bottom: 40px;
+    letter-spacing: 3px;
+  }
+
+  #title-screen .start-prompt {
+    font-size: 14px;
+    color: #ff3366;
+    animation: pulse 1.5s infinite;
+  }
+
+  #death-screen {
+    display: none;
+  }
+
+  #death-screen h2 {
+    font-family: 'Creepster', cursive;
+    font-size: 56px;
+    animation: shake 0.3s infinite;
+    margin-bottom: 20px;
+  }
+
+  #death-screen .stats {
+    font-size: 10px;
+    color: #aa0022;
+    line-height: 2.2;
+    margin-bottom: 30px;
+  }
+
+  #death-screen .restart-prompt {
+    font-size: 12px;
+    color: #ff3366;
+    animation: pulse 1.5s infinite;
+  }
+
+  .hud {
+    position: absolute;
+    top: 20px;
+    left: 0; right: 0;
+    display: none;
+    justify-content: space-between;
+    padding: 0 30px;
+    font-size: 12px;
+    color: #ff0033;
+    text-shadow: 0 0 10px rgba(255, 0, 51, 0.6);
+  }
+
+  .hud .souls {
+    color: #aa00ff;
+    text-shadow: 0 0 10px rgba(170, 0, 255, 0.6);
+  }
+
+  .combo-display {
+    position: absolute;
+    top: 50px;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 10px;
+    color: #ff6600;
+    text-shadow: 0 0 10px rgba(255, 102, 0, 0.8);
+    display: none;
+  }
+
+  @keyframes flicker {
+    0%, 92%, 100% { opacity: 1; }
+    93% { opacity: 0.3; }
+    94% { opacity: 0.8; }
+    95% { opacity: 0.2; }
+    96% { opacity: 0.9; }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px) rotate(-1deg); }
+    75% { transform: translateX(3px) rotate(1deg); }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="game" width="800" height="600"></canvas>
+
+<div id="ui-overlay">
+  <div id="title-screen">
+    <h1>DEATH.RUN</h1>
+    <div class="subtitle">// ESCAPE HELL OR DIE TRYING //</div>
+    <div class="start-prompt">[ PRESS SPACE TO DESCEND ]</div>
+  </div>
+
+  <div id="death-screen">
+    <h2>WASTED</h2>
+    <div class="stats">
+      <div>DISTANCE: <span id="final-dist">0</span>m INTO THE ABYSS</div>
+      <div>SOULS DEVOURED: <span id="final-souls">0</span></div>
+      <div>DEMONS DODGED: <span id="final-dodged">0</span></div>
+      <div>MAX COMBO: <span id="final-combo">0</span>x</div>
+      <div>CAUSE OF DEATH: <span id="death-cause">SKILL ISSUE</span></div>
+    </div>
+    <div class="restart-prompt">[ SPACE TO SUFFER AGAIN ]</div>
+  </div>
+
+  <div class="hud" id="hud">
+    <div>DIST: <span id="hud-dist">0</span>m</div>
+    <div class="souls">SOULS: <span id="hud-souls">0</span></div>
+    <div>SPEED: <span id="hud-speed">0</span></div>
+  </div>
+
+  <div class="combo-display" id="combo-display">
+    <span id="combo-text"></span>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = 800, H = 600;
+
+// Game state
+let state = 'title'; // title, playing, dead
+let player, obstacles, souls, particles, bgParticles;
+let distance, soulCount, demonsDodged, combo, maxCombo, speed;
+let screenShake = 0;
+let flashAlpha = 0;
+let frameCount = 0;
+let lastObstacle = 0;
+let lastSoul = 0;
+let dashCooldown = 0;
+let invincible = 0;
+let deathCauses = [];
+
+// Input
+const keys = {};
+document.addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (e.code === 'Space') {
+    e.preventDefault();
+    if (state === 'title') startGame();
+    else if (state === 'dead') startGame();
+  }
+});
+document.addEventListener('keyup', e => keys[e.code] = false);
+
+// Touch support
+let touchX = null;
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const t = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  touchX = t.clientX - rect.left;
+  if (state !== 'playing') startGame();
+});
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const t = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  touchX = t.clientX - rect.left;
+});
+canvas.addEventListener('touchend', () => touchX = null);
+
+function startGame() {
+  state = 'playing';
+  player = { x: 200, y: H / 2, w: 24, h: 32, vy: 0, trail: [] };
+  obstacles = [];
+  souls = [];
+  particles = [];
+  bgParticles = [];
+  distance = 0;
+  soulCount = 0;
+  demonsDodged = 0;
+  combo = 0;
+  maxCombo = 0;
+  speed = 3;
+  dashCooldown = 0;
+  invincible = 0;
+  deathCauses = [];
+  frameCount = 0;
+  lastObstacle = 0;
+  lastSoul = 0;
+
+  for (let i = 0; i < 60; i++) {
+    bgParticles.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      size: Math.random() * 2 + 0.5,
+      speed: Math.random() * 1 + 0.5,
+      alpha: Math.random() * 0.5 + 0.1
+    });
+  }
+
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('death-screen').style.display = 'none';
+  document.getElementById('hud').style.display = 'flex';
+  document.getElementById('combo-display').style.display = 'block';
+}
+
+function die(cause) {
+  state = 'dead';
+  screenShake = 20;
+  flashAlpha = 1;
+
+  // Death explosion
+  for (let i = 0; i < 50; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const spd = Math.random() * 8 + 2;
+    particles.push({
+      x: player.x, y: player.y,
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd,
+      life: 60 + Math.random() * 40,
+      maxLife: 100,
+      size: Math.random() * 4 + 2,
+      color: Math.random() > 0.5 ? '#ff0033' : '#ff6600'
+    });
+  }
+  // Skull fragments
+  for (let i = 0; i < 15; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const spd = Math.random() * 5 + 1;
+    particles.push({
+      x: player.x, y: player.y,
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd - 2,
+      life: 80,
+      maxLife: 80,
+      size: Math.random() * 3 + 1,
+      color: '#ccccaa',
+      gravity: true
+    });
+  }
+
+  document.getElementById('final-dist').textContent = Math.floor(distance);
+  document.getElementById('final-souls').textContent = soulCount;
+  document.getElementById('final-dodged').textContent = demonsDodged;
+  document.getElementById('final-combo').textContent = maxCombo;
+  document.getElementById('death-cause').textContent = cause;
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('combo-display').style.display = 'none';
+
+  setTimeout(() => {
+    document.getElementById('death-screen').style.display = 'block';
+  }, 800);
+}
+
+const OBSTACLE_TYPES = [
+  { name: 'HELLFIRE PILLAR', color: '#ff2200', w: 30, h: 80, pattern: 'pillar' },
+  { name: 'DEMON SKULL', color: '#ff0066', w: 40, h: 40, pattern: 'skull' },
+  { name: 'BONE SAW', color: '#ccccaa', w: 50, h: 20, pattern: 'saw' },
+  { name: 'LAVA GEYSER', color: '#ff6600', w: 25, h: 120, pattern: 'geyser' },
+  { name: 'BLOOD SPIKE', color: '#990022', w: 15, h: 60, pattern: 'spike' },
+  { name: 'CHAIN WHIP', color: '#888888', w: 200, h: 8, pattern: 'chain' },
+];
+
+function spawnObstacle() {
+  const diff = Math.min(distance / 500, 1);
+  const count = 1 + (Math.random() < diff ? 1 : 0);
+
+  for (let i = 0; i < count; i++) {
+    const type = OBSTACLE_TYPES[Math.floor(Math.random() * OBSTACLE_TYPES.length)];
+    const o = {
+      x: W + 50 + i * 120,
+      y: Math.random() * (H - type.h - 80) + 40,
+      w: type.w,
+      h: type.h,
+      type: type,
+      angle: 0,
+      sinOffset: Math.random() * Math.PI * 2,
+      passed: false
+    };
+
+    // Some obstacles move
+    if (type.pattern === 'saw') {
+      o.vy = (Math.random() > 0.5 ? 1 : -1) * (2 + diff * 2);
+    } else if (type.pattern === 'chain') {
+      o.y = Math.random() * (H - 100) + 50;
+    } else if (type.pattern === 'skull') {
+      o.homing = diff > 0.4 && Math.random() > 0.5;
+    }
+
+    obstacles.push(o);
+  }
+}
+
+function spawnSoul() {
+  const s = {
+    x: W + 20,
+    y: Math.random() * (H - 100) + 50,
+    size: 12,
+    pulse: 0,
+    collected: false
+  };
+  souls.push(s);
+}
+
+function drawSkull(x, y, size, color) {
+  ctx.fillStyle = color;
+  // Head
+  ctx.beginPath();
+  ctx.arc(x, y - size * 0.1, size * 0.45, 0, Math.PI * 2);
+  ctx.fill();
+  // Jaw
+  ctx.fillRect(x - size * 0.25, y + size * 0.2, size * 0.5, size * 0.2);
+  // Eyes
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(x - size * 0.15, y - size * 0.1, size * 0.1, 0, Math.PI * 2);
+  ctx.arc(x + size * 0.15, y - size * 0.1, size * 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  // Teeth
+  ctx.fillStyle = color;
+  for (let i = -2; i <= 2; i++) {
+    ctx.fillRect(x + i * size * 0.09 - 2, y + size * 0.2, 4, 8);
+  }
+}
+
+function drawPlayer() {
+  if (invincible > 0 && Math.floor(frameCount / 3) % 2 === 0) return;
+
+  const px = player.x, py = player.y;
+
+  // Trail
+  ctx.globalAlpha = 0.3;
+  for (let i = 0; i < player.trail.length; i++) {
+    const t = player.trail[i];
+    const a = i / player.trail.length * 0.3;
+    ctx.globalAlpha = a;
+    drawSkull(t.x, t.y, 28, dashCooldown < 30 ? '#ff0033' : '#ff6600');
+  }
+  ctx.globalAlpha = 1;
+
+  // Glow
+  const grd = ctx.createRadialGradient(px, py, 5, px, py, 40);
+  grd.addColorStop(0, 'rgba(255, 0, 51, 0.3)');
+  grd.addColorStop(1, 'rgba(255, 0, 51, 0)');
+  ctx.fillStyle = grd;
+  ctx.fillRect(px - 40, py - 40, 80, 80);
+
+  // Body - skeleton figure
+  ctx.strokeStyle = '#ddd';
+  ctx.lineWidth = 2;
+  // Spine
+  ctx.beginPath();
+  ctx.moveTo(px, py + 8);
+  ctx.lineTo(px, py + 24);
+  ctx.stroke();
+  // Arms
+  const armWave = Math.sin(frameCount * 0.15) * 5;
+  ctx.beginPath();
+  ctx.moveTo(px - 12, py + 10 + armWave);
+  ctx.lineTo(px, py + 14);
+  ctx.lineTo(px + 12, py + 10 - armWave);
+  ctx.stroke();
+  // Legs
+  const legWave = Math.sin(frameCount * 0.2) * 4;
+  ctx.beginPath();
+  ctx.moveTo(px - 8, py + 32 + legWave);
+  ctx.lineTo(px, py + 24);
+  ctx.lineTo(px + 8, py + 32 - legWave);
+  ctx.stroke();
+
+  // Skull head
+  drawSkull(px, py, 30, '#eee');
+
+  // Flame eyes when dashing
+  if (dashCooldown < 30) {
+    ctx.fillStyle = '#ff0033';
+    ctx.beginPath();
+    ctx.arc(px - 4, py - 4, 3, 0, Math.PI * 2);
+    ctx.arc(px + 4, py - 4, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawObstacle(o) {
+  const t = o.type;
+  ctx.save();
+
+  switch (t.pattern) {
+    case 'pillar':
+      // Hellfire pillar
+      const pgrd = ctx.createLinearGradient(o.x, o.y, o.x, o.y + o.h);
+      pgrd.addColorStop(0, '#ff4400');
+      pgrd.addColorStop(0.5, '#ff0000');
+      pgrd.addColorStop(1, '#880000');
+      ctx.fillStyle = pgrd;
+      ctx.fillRect(o.x - o.w/2, o.y, o.w, o.h);
+      // Flames on top
+      for (let i = 0; i < 5; i++) {
+        const fx = o.x - o.w/2 + Math.random() * o.w;
+        const fy = o.y - Math.random() * 15;
+        ctx.fillStyle = `rgba(255, ${100 + Math.random() * 100}, 0, ${Math.random() * 0.8})`;
+        ctx.beginPath();
+        ctx.arc(fx, fy, Math.random() * 5 + 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      break;
+
+    case 'skull':
+      drawSkull(o.x, o.y, o.w, t.color);
+      // Glowing eyes
+      ctx.fillStyle = '#ffff00';
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#ffff00';
+      ctx.beginPath();
+      ctx.arc(o.x - o.w * 0.15, o.y - o.w * 0.1, 4, 0, Math.PI * 2);
+      ctx.arc(o.x + o.w * 0.15, o.y - o.w * 0.1, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      break;
+
+    case 'saw':
+      o.angle += 0.15;
+      ctx.translate(o.x, o.y);
+      ctx.rotate(o.angle);
+      ctx.fillStyle = t.color;
+      // Serrated circle
+      ctx.beginPath();
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2;
+        const r = i % 2 === 0 ? 25 : 18;
+        ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#666';
+      ctx.beginPath();
+      ctx.arc(0, 0, 6, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+
+    case 'geyser':
+      // Lava spray
+      for (let i = 0; i < o.h; i += 4) {
+        const wobble = Math.sin((frameCount + i) * 0.1 + o.sinOffset) * 8;
+        const alpha = 1 - i / o.h;
+        ctx.fillStyle = `rgba(255, ${60 + i}, 0, ${alpha})`;
+        ctx.fillRect(o.x - 3 + wobble, o.y + i, 6, 4);
+      }
+      break;
+
+    case 'spike':
+      ctx.fillStyle = t.color;
+      ctx.beginPath();
+      ctx.moveTo(o.x, o.y);
+      ctx.lineTo(o.x - o.w/2, o.y + o.h);
+      ctx.lineTo(o.x + o.w/2, o.y + o.h);
+      ctx.closePath();
+      ctx.fill();
+      // Blood drip
+      ctx.fillStyle = '#ff0022';
+      const dripY = (frameCount * 2 + o.sinOffset * 100) % o.h;
+      ctx.beginPath();
+      ctx.arc(o.x, o.y + dripY, 2, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+
+    case 'chain':
+      ctx.strokeStyle = '#666';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      for (let i = 0; i < o.w; i += 3) {
+        const cy = o.y + Math.sin((i + frameCount * 3) * 0.05) * 20;
+        if (i === 0) ctx.moveTo(o.x + i, cy);
+        else ctx.lineTo(o.x + i, cy);
+      }
+      ctx.stroke();
+      // Spikes on chain
+      ctx.fillStyle = '#999';
+      for (let i = 0; i < o.w; i += 20) {
+        const cy = o.y + Math.sin((i + frameCount * 3) * 0.05) * 20;
+        ctx.beginPath();
+        ctx.moveTo(o.x + i, cy - 8);
+        ctx.lineTo(o.x + i - 3, cy);
+        ctx.lineTo(o.x + i + 3, cy);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.lineWidth = 1;
+      break;
+  }
+
+  ctx.restore();
+}
+
+function drawSoul(s) {
+  s.pulse += 0.08;
+  const p = Math.sin(s.pulse) * 3;
+  const sz = s.size + p;
+
+  // Outer glow
+  const grd = ctx.createRadialGradient(s.x, s.y, 2, s.x, s.y, sz + 10);
+  grd.addColorStop(0, 'rgba(170, 0, 255, 0.6)');
+  grd.addColorStop(1, 'rgba(170, 0, 255, 0)');
+  ctx.fillStyle = grd;
+  ctx.fillRect(s.x - sz - 10, s.y - sz - 10, (sz + 10) * 2, (sz + 10) * 2);
+
+  // Core
+  ctx.fillStyle = '#cc44ff';
+  ctx.shadowBlur = 15;
+  ctx.shadowColor = '#aa00ff';
+  ctx.beginPath();
+  ctx.arc(s.x, s.y, sz * 0.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Wispy tendrils
+  ctx.strokeStyle = 'rgba(170, 0, 255, 0.4)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + frameCount * 0.03;
+    ctx.beginPath();
+    ctx.moveTo(s.x, s.y);
+    ctx.quadraticCurveTo(
+      s.x + Math.cos(a) * 15,
+      s.y + Math.sin(a) * 15,
+      s.x + Math.cos(a + 0.5) * 8,
+      s.y + Math.sin(a + 0.5) * 20
+    );
+    ctx.stroke();
+  }
+  ctx.shadowBlur = 0;
+  ctx.lineWidth = 1;
+}
+
+function rectCollide(ax, ay, aw, ah, bx, by, bw, bh) {
+  return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+}
+
+function getObstacleHitbox(o) {
+  const t = o.type;
+  switch (t.pattern) {
+    case 'pillar': return { x: o.x - o.w/2, y: o.y, w: o.w, h: o.h };
+    case 'skull': return { x: o.x - o.w/2, y: o.y - o.w/2, w: o.w, h: o.w };
+    case 'saw': return { x: o.x - 25, y: o.y - 25, w: 50, h: 50 };
+    case 'geyser': return { x: o.x - 10, y: o.y, w: 20, h: o.h };
+    case 'spike': return { x: o.x - o.w/2, y: o.y, w: o.w, h: o.h };
+    case 'chain':
+      const cy = o.y + Math.sin((player.x - o.x + frameCount * 3) * 0.05) * 20;
+      return { x: o.x, y: cy - 12, w: o.w, h: 24 };
+    default: return { x: o.x, y: o.y, w: o.w, h: o.h };
+  }
+}
+
+const COMBO_TAUNTS = [
+  '', '', 'NOT BAD...', 'UNHOLY', 'DEMONIC!', 'BLASPHEMOUS!!',
+  'SACRILEGE!!!', 'GODKILLER!!!!', 'BEYOND DEATH!!!!!'
+];
+
+function update() {
+  frameCount++;
+
+  if (state !== 'playing') {
+    // Still update particles in death
+    updateParticles();
+    return;
+  }
+
+  // Speed ramp
+  speed = 3 + distance / 300;
+  if (speed > 12) speed = 12;
+
+  distance += speed * 0.1;
+  if (dashCooldown > 0) dashCooldown--;
+  if (invincible > 0) invincible--;
+
+  // Player movement
+  const moveSpeed = 5;
+  if (keys['ArrowUp'] || keys['KeyW']) player.vy -= 0.8;
+  if (keys['ArrowDown'] || keys['KeyS']) player.vy += 0.8;
+  if (keys['ArrowLeft'] || keys['KeyA']) player.x -= moveSpeed;
+  if (keys['ArrowRight'] || keys['KeyD']) player.x += moveSpeed;
+
+  // Dash
+  if ((keys['ShiftLeft'] || keys['ShiftRight']) && dashCooldown === 0) {
+    dashCooldown = 60;
+    invincible = 15;
+    speed += 2;
+    screenShake = 5;
+    // Dash particles
+    for (let i = 0; i < 10; i++) {
+      particles.push({
+        x: player.x - 10 + Math.random() * 20,
+        y: player.y + Math.random() * 20 - 10,
+        vx: -Math.random() * 5 - 2,
+        vy: (Math.random() - 0.5) * 3,
+        life: 20,
+        maxLife: 20,
+        size: Math.random() * 3 + 1,
+        color: '#ff3300'
+      });
+    }
+  }
+
+  // Touch control
+  if (touchX !== null) {
+    const targetX = (touchX / canvas.getBoundingClientRect().width) * W;
+    player.x += (targetX - player.x) * 0.08;
+  }
+
+  // Physics
+  player.vy *= 0.92;
+  player.y += player.vy;
+
+  // Clamp
+  if (player.x < 20) player.x = 20;
+  if (player.x > W - 20) player.x = W - 20;
+  if (player.y < 20) { player.y = 20; player.vy = 0; }
+  if (player.y > H - 35) { player.y = H - 35; player.vy = 0; }
+
+  // Trail
+  player.trail.push({ x: player.x, y: player.y });
+  if (player.trail.length > 8) player.trail.shift();
+
+  // Spawn obstacles
+  const spawnRate = Math.max(30, 80 - distance / 10);
+  if (frameCount - lastObstacle > spawnRate) {
+    spawnObstacle();
+    lastObstacle = frameCount;
+  }
+
+  // Spawn souls
+  if (frameCount - lastSoul > 90 + Math.random() * 60) {
+    spawnSoul();
+    lastSoul = frameCount;
+  }
+
+  // Update obstacles
+  for (let i = obstacles.length - 1; i >= 0; i--) {
+    const o = obstacles[i];
+    o.x -= speed;
+
+    // Movement patterns
+    if (o.type.pattern === 'saw' && o.vy) {
+      o.y += o.vy;
+      if (o.y < 30 || o.y > H - 30) o.vy *= -1;
+    }
+    if (o.homing) {
+      const dy = player.y - o.y;
+      o.y += dy * 0.02;
+    }
+
+    // Collision
+    if (invincible === 0) {
+      const hb = getObstacleHitbox(o);
+      if (rectCollide(player.x - 10, player.y - 12, 20, 38, hb.x, hb.y, hb.w, hb.h)) {
+        die(o.type.name);
+        return;
+      }
+    }
+
+    // Track dodged
+    if (!o.passed && o.x + 50 < player.x) {
+      o.passed = true;
+      demonsDodged++;
+      combo++;
+      if (combo > maxCombo) maxCombo = combo;
+    }
+
+    // Remove offscreen
+    if (o.x < -250) {
+      obstacles.splice(i, 1);
+    }
+  }
+
+  // Update souls
+  for (let i = souls.length - 1; i >= 0; i--) {
+    const s = souls[i];
+    s.x -= speed;
+
+    const dx = player.x - s.x;
+    const dy = player.y - s.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // Magnet effect
+    if (dist < 60) {
+      s.x += dx * 0.1;
+      s.y += dy * 0.1;
+    }
+
+    if (dist < 20) {
+      soulCount++;
+      combo += 2;
+      if (combo > maxCombo) maxCombo = combo;
+      // Collection burst
+      for (let j = 0; j < 12; j++) {
+        const angle = (j / 12) * Math.PI * 2;
+        particles.push({
+          x: s.x, y: s.y,
+          vx: Math.cos(angle) * 3,
+          vy: Math.sin(angle) * 3,
+          life: 25,
+          maxLife: 25,
+          size: 2,
+          color: '#cc44ff'
+        });
+      }
+      souls.splice(i, 1);
+      continue;
+    }
+
+    if (s.x < -30) {
+      souls.splice(i, 1);
+      combo = 0; // Miss a soul, lose combo
+    }
+  }
+
+  // BG particles
+  for (const p of bgParticles) {
+    p.x -= p.speed + speed * 0.3;
+    if (p.x < 0) { p.x = W; p.y = Math.random() * H; }
+  }
+
+  updateParticles();
+
+  // HUD
+  document.getElementById('hud-dist').textContent = Math.floor(distance);
+  document.getElementById('hud-souls').textContent = soulCount;
+  document.getElementById('hud-speed').textContent = speed.toFixed(1);
+
+  const ci = Math.min(combo, COMBO_TAUNTS.length - 1);
+  if (COMBO_TAUNTS[ci]) {
+    document.getElementById('combo-text').textContent = combo + 'x ' + COMBO_TAUNTS[ci];
+    document.getElementById('combo-display').style.opacity = '1';
+  } else {
+    document.getElementById('combo-display').style.opacity = '0';
+  }
+}
+
+function updateParticles() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    if (p.gravity) p.vy += 0.15;
+    p.vx *= 0.98;
+    p.vy *= 0.98;
+    p.life--;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+
+  if (screenShake > 0) screenShake *= 0.85;
+  if (screenShake < 0.5) screenShake = 0;
+  if (flashAlpha > 0) flashAlpha -= 0.05;
+}
+
+function draw() {
+  ctx.save();
+
+  // Screen shake
+  if (screenShake > 0) {
+    ctx.translate(
+      (Math.random() - 0.5) * screenShake,
+      (Math.random() - 0.5) * screenShake
+    );
+  }
+
+  // Background - hellscape gradient
+  const bgGrd = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrd.addColorStop(0, '#0a0005');
+  bgGrd.addColorStop(0.5, '#110008');
+  bgGrd.addColorStop(1, '#1a0200');
+  ctx.fillStyle = bgGrd;
+  ctx.fillRect(0, 0, W, H);
+
+  // Scrolling hell-floor
+  ctx.fillStyle = '#1a0000';
+  ctx.fillRect(0, H - 15, W, 15);
+  ctx.strokeStyle = '#330000';
+  ctx.lineWidth = 1;
+  const floorOffset = (frameCount * speed) % 40;
+  for (let x = -floorOffset; x < W; x += 40) {
+    ctx.beginPath();
+    ctx.moveTo(x, H - 15);
+    ctx.lineTo(x + 20, H);
+    ctx.stroke();
+  }
+
+  // Ceiling
+  ctx.fillStyle = '#0a0000';
+  ctx.fillRect(0, 0, W, 10);
+  for (let x = -floorOffset; x < W; x += 30) {
+    ctx.fillStyle = '#220000';
+    ctx.beginPath();
+    ctx.moveTo(x, 10);
+    ctx.lineTo(x + 15, 0);
+    ctx.lineTo(x + 30, 10);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // BG particles (embers/ash)
+  if (bgParticles) {
+    for (const p of bgParticles) {
+      ctx.fillStyle = `rgba(255, ${50 + Math.random() * 50}, 0, ${p.alpha})`;
+      ctx.fillRect(p.x, p.y, p.size, p.size);
+    }
+  }
+
+  // Souls
+  if (souls) {
+    for (const s of souls) drawSoul(s);
+  }
+
+  // Obstacles
+  if (obstacles) {
+    for (const o of obstacles) drawObstacle(o);
+  }
+
+  // Player
+  if (state === 'playing' || state === 'dead') {
+    if (state === 'playing') drawPlayer();
+  }
+
+  // Particles (on top)
+  for (const p of particles) {
+    const alpha = p.life / p.maxLife;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+  }
+  ctx.globalAlpha = 1;
+
+  // Red flash on death
+  if (flashAlpha > 0) {
+    ctx.fillStyle = `rgba(255, 0, 0, ${flashAlpha})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // Vignette
+  const vgrd = ctx.createRadialGradient(W/2, H/2, 150, W/2, H/2, 450);
+  vgrd.addColorStop(0, 'rgba(0,0,0,0)');
+  vgrd.addColorStop(1, 'rgba(0,0,0,0.7)');
+  ctx.fillStyle = vgrd;
+  ctx.fillRect(0, 0, W, H);
+
+  // Scanlines
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  for (let y = 0; y < H; y += 3) {
+    ctx.fillRect(0, y, W, 1);
+  }
+
+  ctx.restore();
+}
+
+// Title screen animation
+function drawTitleBG() {
+  ctx.fillStyle = '#0a0005';
+  ctx.fillRect(0, 0, W, H);
+
+  // Floating skulls in background
+  const t = Date.now() * 0.001;
+  ctx.globalAlpha = 0.1;
+  for (let i = 0; i < 8; i++) {
+    const x = (W * (i / 8) + t * 30) % (W + 60) - 30;
+    const y = H/2 + Math.sin(t + i * 1.5) * 150;
+    drawSkull(x, y, 50, '#ff0033');
+  }
+  ctx.globalAlpha = 1;
+
+  // Vignette
+  const vgrd = ctx.createRadialGradient(W/2, H/2, 100, W/2, H/2, 450);
+  vgrd.addColorStop(0, 'rgba(0,0,0,0)');
+  vgrd.addColorStop(1, 'rgba(0,0,0,0.9)');
+  ctx.fillStyle = vgrd;
+  ctx.fillRect(0, 0, W, H);
+
+  // Scanlines
+  ctx.fillStyle = 'rgba(0,0,0,0.1)';
+  for (let y = 0; y < H; y += 3) {
+    ctx.fillRect(0, y, W, 1);
+  }
+}
+
+function gameLoop() {
+  if (state === 'title') {
+    drawTitleBG();
+  } else {
+    update();
+    draw();
+  }
+  requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>
