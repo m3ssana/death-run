@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DEATH.RUN — Escape Hell</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Press+Start+2P&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Orbitron:wght@400;700;900&family=Press+Start+2P&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     background: #000;
@@ -14,13 +14,13 @@
     justify-content: center;
     align-items: center;
     height: 100vh;
-    font-family: 'Press Start 2P', monospace;
+    font-family: 'Orbitron', monospace;
   }
   #wrap { position: relative; }
   canvas {
     display: block;
-    border: 2px solid #ff0033;
-    box-shadow: 0 0 60px rgba(255,0,51,0.4), 0 0 120px rgba(255,0,51,0.15);
+    border: 3px solid #ff0033;
+    box-shadow: 0 0 60px rgba(255,0,51,0.5), 0 0 120px rgba(255,0,51,0.2), inset 0 0 30px rgba(255,0,51,0.1);
   }
   #bloom { position: absolute; top: 0; left: 0; pointer-events: none; mix-blend-mode: screen; opacity: 0.6; }
   #ui-overlay {
@@ -28,20 +28,123 @@
     pointer-events: none;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
   }
-  #title-screen, #death-screen { pointer-events: auto; text-align: center; color: #ff0033; text-shadow: 0 0 30px rgba(255,0,51,0.9), 0 0 60px rgba(255,0,0,0.4); }
-  #title-screen h1 { font-family: 'Creepster', cursive; font-size: 80px; letter-spacing: 10px; animation: flicker 3s infinite; margin-bottom: 10px; }
-  #title-screen .subtitle { font-size: 11px; color: #cc0000; margin-bottom: 40px; letter-spacing: 4px; }
-  #title-screen .start-prompt { font-size: 14px; color: #ff3366; animation: pulse 1.5s infinite; }
-  #death-screen { display: none; }
-  #death-screen h2 { font-family: 'Creepster', cursive; font-size: 64px; animation: shake 0.3s infinite; margin-bottom: 20px; }
-  #death-screen .stats { font-size: 10px; color: #aa0022; line-height: 2.4; margin-bottom: 30px; }
-  #death-screen .restart-prompt { font-size: 12px; color: #ff3366; animation: pulse 1.5s infinite; }
-  .hud { position: absolute; top: 18px; left: 0; right: 0; display: none; justify-content: space-between; padding: 0 28px; font-size: 12px; color: #ff0033; text-shadow: 0 0 12px rgba(255,0,51,0.7); }
-  .hud .souls { color: #aa00ff; text-shadow: 0 0 12px rgba(170,0,255,0.7); }
-  .combo-display { position: absolute; top: 50px; left: 0; right: 0; text-align: center; font-size: 10px; color: #ff6600; text-shadow: 0 0 15px rgba(255,102,0,0.9); display: none; }
-  @keyframes flicker { 0%,92%,100%{opacity:1} 93%{opacity:0.3} 94%{opacity:0.8} 95%{opacity:0.2} 96%{opacity:0.9} }
+
+  /* ===== TITLE SCREEN ===== */
+  #title-screen, #death-screen { pointer-events: auto; text-align: center; color: #ff0033; z-index: 100; }
+  #title-screen {
+    background: radial-gradient(ellipse at center, rgba(40,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%);
+    padding: 60px;
+    border: 2px solid #ff0033;
+    box-shadow: 0 0 40px rgba(255,0,51,0.3), inset 0 0 20px rgba(255,0,0,0.1);
+  }
+  #title-screen h1 {
+    font-family: 'Creepster', cursive;
+    font-size: 96px;
+    letter-spacing: 12px;
+    animation: flicker 3s infinite;
+    margin-bottom: 5px;
+    text-shadow: 0 0 30px rgba(255,0,51,0.9), 0 0 60px rgba(255,0,0,0.6), 0 4px 15px rgba(0,0,0,0.8);
+    filter: drop-shadow(0 0 8px rgba(255,0,51,0.5));
+  }
+  #title-screen .subtitle {
+    font-size: 12px;
+    color: #cc0000;
+    margin-bottom: 50px;
+    letter-spacing: 3px;
+    text-shadow: 0 0 15px rgba(255,0,0,0.5);
+    font-weight: 700;
+  }
+  #title-screen .start-prompt {
+    font-size: 13px;
+    color: #ffaa00;
+    animation: pulse 1.2s infinite;
+    text-shadow: 0 0 15px rgba(255,170,0,0.8);
+    letter-spacing: 2px;
+    margin-top: 30px;
+  }
+
+  /* ===== DEATH SCREEN ===== */
+  #death-screen {
+    display: none;
+    background: radial-gradient(ellipse at center, rgba(80,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%);
+    padding: 50px 80px;
+    border: 3px solid #ff0033;
+    box-shadow: 0 0 50px rgba(255,0,51,0.4), inset 0 0 30px rgba(255,0,0,0.15);
+  }
+  #death-screen h2 {
+    font-family: 'Creepster', cursive;
+    font-size: 72px;
+    animation: shake 0.2s infinite;
+    margin-bottom: 25px;
+    color: #ff0033;
+    text-shadow: 0 0 40px rgba(255,0,51,0.8), 0 0 80px rgba(255,0,0,0.4);
+    letter-spacing: 8px;
+  }
+  #death-screen .stats {
+    font-size: 11px;
+    color: #ffaa00;
+    line-height: 2.6;
+    margin-bottom: 35px;
+    background: rgba(0,0,0,0.3);
+    padding: 20px 30px;
+    border-left: 3px solid #ff0033;
+    text-shadow: 0 0 10px rgba(255,170,0,0.6);
+    letter-spacing: 1px;
+  }
+  #death-screen .stats div { display: flex; justify-content: space-between; min-width: 350px; }
+  #death-screen .stats span { color: #ff3366; font-weight: 700; }
+  #death-screen .restart-prompt {
+    font-size: 12px;
+    color: #ffaa00;
+    animation: pulse 1.2s infinite;
+    text-shadow: 0 0 12px rgba(255,170,0,0.7);
+    letter-spacing: 2px;
+  }
+
+  /* ===== HUD ===== */
+  #hud-container {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    display: none;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 700;
+    z-index: 50;
+    letter-spacing: 1px;
+  }
+  .hud-panel {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid #ff0033;
+    padding: 8px 15px;
+    box-shadow: 0 0 15px rgba(255,0,51,0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .hud-label { color: #888; font-size: 8px; letter-spacing: 1px; }
+  .hud-value { color: #ff0033; text-shadow: 0 0 8px rgba(255,0,51,0.5); font-size: 12px; }
+  .hud-panel.souls .hud-value { color: #aa00ff; text-shadow: 0 0 8px rgba(170,0,255,0.5); }
+  .hud-panel.speed .hud-value { color: #ffaa00; text-shadow: 0 0 8px rgba(255,170,0,0.5); }
+  .hud-panel.combo { position: absolute; bottom: 12px; left: 12px; padding: 10px 20px; }
+  .hud-panel.combo .hud-value { color: #ff6600; font-size: 14px; text-shadow: 0 0 12px rgba(255,102,0,0.7); }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes flicker {
+    0%,92%,100%{opacity:1}
+    93%{opacity:0.2}
+    94%{opacity:0.9}
+    95%{opacity:0.15}
+    96%{opacity:0.95}
+  }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px) rotate(-1deg)} 75%{transform:translateX(4px) rotate(1deg)} }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-3px) rotate(-0.5deg)} 75%{transform:translateX(3px) rotate(0.5deg)} }
+  @keyframes glow {
+    0%,100%{text-shadow: 0 0 10px rgba(255,102,0,0.5), 0 0 20px rgba(255,102,0,0.2)}
+    50%{text-shadow: 0 0 20px rgba(255,102,0,0.9), 0 0 40px rgba(255,102,0,0.4)}
+  }
+  .combo-active { animation: glow 0.6s infinite !important; }
 </style>
 </head>
 <body>
@@ -56,22 +159,34 @@
       <div class="start-prompt">[ PRESS SPACE TO DESCEND ]</div>
     </div>
     <div id="death-screen">
-      <h2>WASTED</h2>
+      <h2>⚰ WASTED ⚰</h2>
       <div class="stats">
-        <div>DISTANCE: <span id="final-dist">0</span>m INTO THE ABYSS</div>
-        <div>SOULS DEVOURED: <span id="final-souls">0</span></div>
-        <div>DEMONS DODGED: <span id="final-dodged">0</span></div>
-        <div>MAX COMBO: <span id="final-combo">0</span>x</div>
-        <div>CAUSE OF DEATH: <span id="death-cause">SKILL ISSUE</span></div>
+        <div><span style="color:#aaa">DISTANCE:</span> <span id="final-dist">0</span>m</div>
+        <div><span style="color:#aaa">SOULS COLLECTED:</span> <span id="final-souls">0</span></div>
+        <div><span style="color:#aaa">OBSTACLES EVADED:</span> <span id="final-dodged">0</span></div>
+        <div><span style="color:#aaa">PEAK COMBO:</span> <span id="final-combo">0</span>x</div>
+        <div style="margin-top:10px; padding-top:10px; border-top: 1px solid #ff3366;"><span style="color:#aaa">CAUSE OF DEATH:</span> <span id="death-cause">SKILL ISSUE</span></div>
       </div>
-      <div class="restart-prompt">[ SPACE TO SUFFER AGAIN ]</div>
+      <div class="restart-prompt">[ PRESS SPACE TO DESCEND AGAIN ]</div>
     </div>
-    <div class="hud" id="hud">
-      <div>DIST: <span id="hud-dist">0</span>m</div>
-      <div class="souls">SOULS: <span id="hud-souls">0</span></div>
-      <div>SPEED: <span id="hud-speed">0</span></div>
+    <div id="hud-container">
+      <div class="hud-panel">
+        <div class="hud-label">DISTANCE</div>
+        <div class="hud-value"><span id="hud-dist">0</span>m</div>
+      </div>
+      <div class="hud-panel souls">
+        <div class="hud-label">SOULS</div>
+        <div class="hud-value">✦ <span id="hud-souls">0</span></div>
+      </div>
+      <div class="hud-panel speed">
+        <div class="hud-label">SPEED</div>
+        <div class="hud-value"><span id="hud-speed">0</span></div>
+      </div>
+      <div class="hud-panel combo">
+        <div class="hud-label">COMBO</div>
+        <div class="hud-value" id="combo-text">—</div>
+      </div>
     </div>
-    <div class="combo-display" id="combo-display"><span id="combo-text"></span></div>
   </div>
 </div>
 
@@ -160,8 +275,7 @@ function startGame() {
   }
   document.getElementById('title-screen').style.display = 'none';
   document.getElementById('death-screen').style.display = 'none';
-  document.getElementById('hud').style.display = 'flex';
-  document.getElementById('combo-display').style.display = 'block';
+  document.getElementById('hud-container').style.display = 'flex';
 }
 
 function die(cause) {
@@ -179,8 +293,7 @@ function die(cause) {
   document.getElementById('final-dodged').textContent = demonsDodged;
   document.getElementById('final-combo').textContent = maxCombo;
   document.getElementById('death-cause').textContent = cause;
-  document.getElementById('hud').style.display = 'none';
-  document.getElementById('combo-display').style.display = 'none';
+  document.getElementById('hud-container').style.display = 'none';
   setTimeout(() => { document.getElementById('death-screen').style.display = 'block'; }, 800);
 }
 
@@ -984,8 +1097,14 @@ function update() {
   document.getElementById('hud-souls').textContent = soulCount;
   document.getElementById('hud-speed').textContent = speed.toFixed(1);
   const ci = Math.min(combo, COMBO_TAUNTS.length - 1);
-  if (COMBO_TAUNTS[ci]) { document.getElementById('combo-text').textContent = combo + 'x ' + COMBO_TAUNTS[ci]; document.getElementById('combo-display').style.opacity = '1'; }
-  else { document.getElementById('combo-display').style.opacity = '0'; }
+  const comboPanel = document.querySelector('.hud-panel.combo');
+  if (combo > 0 && COMBO_TAUNTS[ci]) {
+    document.getElementById('combo-text').innerHTML = combo + '×<br>' + COMBO_TAUNTS[ci];
+    comboPanel.classList.add('combo-active');
+  } else {
+    document.getElementById('combo-text').textContent = '—';
+    comboPanel.classList.remove('combo-active');
+  }
 }
 
 function updateParticles() {
