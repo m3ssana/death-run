@@ -20,6 +20,14 @@ python3 -m http.server 8000
 
 No build step, no tests, no linter. Check browser console (F12) for errors.
 
+## CI
+
+GitHub Actions runs on every push and PR (`.github/workflows/security.yml`):
+- **TruffleHog** — scans git history for verified secrets (`--only-verified`)
+- **Semgrep** — SAST with `p/javascript` and `p/secrets` rulesets
+
+Results appear on the workflow run summary page. Both jobs fail on findings.
+
 ## Architecture
 
 ```
