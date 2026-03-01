@@ -27,7 +27,6 @@ export function update() {
   if ((gameState.keys['ShiftLeft'] || gameState.keys['ShiftRight']) && gameState.dashCooldown === 0) {
     gameState.dashCooldown = 60;
     gameState.invincible = 15;
-    gameState.speed += 2;
     gameState.screenShake = 6;
     for (let i = 0; i < 15; i++) {
       gameState.particles.push({
@@ -71,7 +70,10 @@ export function update() {
     o.x += o.vx;
     o.y += (o.vy || 0);
     o.sinOffset = (o.sinOffset || 0) + 0.1;
-    if (o.x < -100) gameState.obstacles.splice(i, 1);
+    if (o.x < -100) {
+      gameState.demonsDodged++;
+      gameState.obstacles.splice(i, 1);
+    }
   }
 
   for (let i = gameState.souls.length - 1; i >= 0; i--) {
@@ -153,7 +155,6 @@ export function die(cause) {
   gameState.state = 'dead';
   gameState.flashAlpha = 0.8;
   gameState.screenShake = 12;
-  gameState.demonsDodged = Math.max(0, gameState.obstacles.length - 1);
 
   // Explosion particles
   for (let i = 0; i < 40; i++) {
