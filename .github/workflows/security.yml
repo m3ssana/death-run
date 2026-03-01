@@ -12,9 +12,29 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: trufflesecurity/trufflehog@main
-        with:
-          extra_args: --only-verified
+      - name: Install TruffleHog
+        run: curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+      - name: Scan for secrets
+        id: scan
+        continue-on-error: true
+        run: trufflehog git file://./ --only-verified --fail --json 2>&1 | tee /tmp/trufflehog.out
+      - name: Write summary
+        if: always()
+        run: |
+          echo "## Secret Scanning (TruffleHog)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.scan.outcome }}" == "success" ]; then
+            echo ":white_check_mark: No verified secrets found." >> $GITHUB_STEP_SUMMARY
+          else
+            echo ":x: **Verified secrets detected:**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat /tmp/trufflehog.out >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+      - name: Fail on findings
+        if: steps.scan.outcome == 'failure'
+        run: exit 1
 
   semgrep:
     name: SAST (Semgrep)
@@ -23,4 +43,24 @@ jobs:
       image: semgrep/semgrep
     steps:
       - uses: actions/checkout@v4
-      - run: semgrep scan --config=p/javascript --config=p/secrets --error .
+      - name: Run Semgrep
+        id: scan
+        continue-on-error: true
+        run: semgrep scan --config=p/javascript --config=p/secrets --error . 2>&1 | tee /tmp/semgrep.out
+      - name: Write summary
+        if: always()
+        run: |
+          echo "## SAST Results (Semgrep)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.scan.outcome }}" == "success" ]; then
+            echo ":white_check_mark: No issues found." >> $GITHUB_STEP_SUMMARY
+          else
+            echo ":x: **Issues detected:**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat /tmp/semgrep.out >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+      - name: Fail on findings
+        if: steps.scan.outcome == 'failure'
+        run: exit 1
