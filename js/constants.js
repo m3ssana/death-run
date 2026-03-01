@@ -37,6 +37,9 @@ export const COMBO_TAUNTS = [
   'BEYOND DEATH!!!!!',
 ];
 
+// Combo milestone thresholds for visual/audio feedback
+export const COMBO_MILESTONES = [5, 10, 25, 50, 100];
+
 // Helper functions
 export function lerp(a, b, t) {
   return a + (b - a) * t;

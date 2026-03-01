@@ -33,6 +33,17 @@ export const gameState = {
   dashCooldown: 0,
   invincible: 0,
 
+  // Grace period: frames to hold off obstacle spawning at run start
+  gracePeriod: 180,
+
+  // Last obstacle pattern name; prevents same type repeating consecutively
+  lastObstacleType: null,
+
+  // Combo milestone flash (gold overlay, distinct from red death flash)
+  comboFlashAlpha: 0,
+  // Previous combo value, used to detect threshold crossings each frame
+  prevCombo: 0,
+
   // Parallax mountains
   mountainLayers: [],
 

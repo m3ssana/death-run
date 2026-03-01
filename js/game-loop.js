@@ -2,7 +2,7 @@ import { gameState } from './state.js';
 import { rectCollide, getObstacleHitbox } from './collision.js';
 import { spawnObstacle, spawnSoul } from './spawning.js';
 import { updateParticles } from './particles.js';
-import { COMBO_TAUNTS, H, PLAY_LEFT, PLAY_RIGHT, PLAY_TOP, PLAY_BOTTOM, lerp, rand } from './constants.js';
+import { COMBO_TAUNTS, COMBO_MILESTONES, H, PLAY_LEFT, PLAY_RIGHT, PLAY_TOP, PLAY_BOTTOM, lerp, rand } from './constants.js';
 
 export function update() {
   gameState.frameCount++;
@@ -60,8 +60,21 @@ export function update() {
   gameState.player.trail.push({ x: gameState.player.x, y: gameState.player.y });
   if (gameState.player.trail.length > 8) gameState.player.trail.shift();
 
-  // Spawning
-  if (gameState.frameCount - gameState.lastObstacle > 100) spawnObstacle();
+  // Grace period: hold off obstacle spawning for the first N frames of a run.
+  // Souls still spawn so the player has an immediate goal.
+  if (gameState.gracePeriod > 0) {
+    gameState.gracePeriod--;
+  }
+
+  // Spawn interval scales from 100 frames (easy) to 60 frames (hard) based on difficulty.
+  // difficulty is already clamped 0–1 by spawnObstacle's local calculation, but we
+  // derive it identically here to drive the interval without adding a shared variable.
+  const spawnDifficulty = Math.min(gameState.distance / 2000, 1);
+  const obstacleInterval = Math.round(lerp(100, 60, spawnDifficulty));
+
+  if (gameState.gracePeriod === 0 && gameState.frameCount - gameState.lastObstacle > obstacleInterval) {
+    spawnObstacle();
+  }
   if (gameState.frameCount - gameState.lastSoul > 50) spawnSoul();
 
   // Move obstacles/souls (right to left)
@@ -112,9 +125,11 @@ export function update() {
     }
   }
 
-  // Difficulty scaling
+  // Difficulty scaling — speed grows with distance but is capped at 8.
+  // Without the cap, speed reaches 13+ at distance 10000, making the
+  // game physically unreadable and obstacles indistinguishable.
   gameState.distance += gameState.speed * 0.1;
-  gameState.speed = 3 + gameState.distance / 1000;
+  gameState.speed = Math.min(3 + gameState.distance / 1000, 8);
 
   // Cooldowns
   if (gameState.dashCooldown > 0) gameState.dashCooldown--;
@@ -145,6 +160,10 @@ export function startGame() {
   gameState.lastSoul = 0;
   gameState.screenShake = 0;
   gameState.flashAlpha = 0;
+  gameState.gracePeriod = 180;
+  gameState.lastObstacleType = null;
+  gameState.comboFlashAlpha = 0;
+  gameState.prevCombo = 0;
 
   document.getElementById('title-screen').style.display = 'none';
   document.getElementById('death-screen').style.display = 'none';
@@ -197,4 +216,23 @@ export function updateHUD() {
     document.getElementById('combo-text').textContent = '—';
     comboPanel.classList.remove('combo-active');
   }
+
+  // Detect combo milestone crossings. We compare the previous value against the current
+  // so a single fast combo jump (e.g., 4 → 10) still triggers the flash for 5 and 10.
+  for (let mi = 0; mi < COMBO_MILESTONES.length; mi++) {
+    const milestone = COMBO_MILESTONES[mi];
+    if (gameState.prevCombo < milestone && gameState.combo >= milestone) {
+      // Gold flash — intensity scales with milestone tier (0.25 → 0.45).
+      gameState.comboFlashAlpha = 0.25 + mi * 0.05;
+      // Light screen shake to punctuate without disrupting readability.
+      gameState.screenShake = Math.max(gameState.screenShake, 3);
+      // HUD panel burst animation: remove and immediately re-add to restart it.
+      comboPanel.classList.remove('combo-milestone');
+      // Force a reflow so the browser registers the class removal before re-adding.
+      void comboPanel.offsetWidth;
+      comboPanel.classList.add('combo-milestone');
+      break; // Trigger only the lowest uncrossed milestone per frame
+    }
+  }
+  gameState.prevCombo = gameState.combo;
 }

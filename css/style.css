@@ -151,3 +151,15 @@ canvas {
   50%{text-shadow: 0 0 20px rgba(255,102,0,0.9), 0 0 40px rgba(255,102,0,0.4)}
 }
 .combo-active { animation: glow 0.6s infinite !important; }
+
+/* Combo milestone burst: replaces glow briefly, then returns to glow.
+   Class is added/removed via JS each time a milestone is crossed. */
+@keyframes combo-milestone-burst {
+  0%   { transform: scale(1);    box-shadow: 0 0 15px rgba(255,200,0,0.3); }
+  30%  { transform: scale(1.18); box-shadow: 0 0 40px rgba(255,200,0,0.9), 0 0 80px rgba(255,200,0,0.4); }
+  60%  { transform: scale(1.06); box-shadow: 0 0 20px rgba(255,200,0,0.6); }
+  100% { transform: scale(1);    box-shadow: 0 0 15px rgba(255,102,0,0.2); }
+}
+.combo-milestone {
+  animation: combo-milestone-burst 0.4s ease-out forwards !important;
+}

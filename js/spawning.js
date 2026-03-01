@@ -3,7 +3,15 @@ import { OBSTACLE_TYPES, W, H, rand } from './constants.js';
 
 export function spawnObstacle() {
   const difficulty = Math.min(gameState.distance / 2000, 1);
-  const type = OBSTACLE_TYPES[Math.floor(Math.random() * OBSTACLE_TYPES.length)];
+
+  // Filter out the last-used type so the same obstacle never repeats back-to-back.
+  // With 6 obstacle types, this always leaves at least 5 valid options.
+  const eligible = gameState.lastObstacleType
+    ? OBSTACLE_TYPES.filter(t => t.pattern !== gameState.lastObstacleType)
+    : OBSTACLE_TYPES;
+  const type = eligible[Math.floor(Math.random() * eligible.length)];
+  gameState.lastObstacleType = type.pattern;
+
   gameState.obstacles.push({
     x: W + 50,
     y: rand(80, H - 40),

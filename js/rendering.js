@@ -53,6 +53,14 @@ export function draw() {
     ctx.fillRect(0, 0, W, H);
     gameState.flashAlpha *= 0.95;
   }
+  // Combo milestone flash: gold overlay, decays faster than death flash so
+  // it feels snappy rather than obstructive.
+  if (gameState.comboFlashAlpha > 0) {
+    ctx.fillStyle = `rgba(255,200,0,${gameState.comboFlashAlpha})`;
+    ctx.fillRect(0, 0, W, H);
+    gameState.comboFlashAlpha *= 0.80;
+    if (gameState.comboFlashAlpha < 0.005) gameState.comboFlashAlpha = 0;
+  }
   ctx.globalAlpha = 0.6;
   const fogGrd = ctx.createLinearGradient(0, 0, W, 0);
   fogGrd.addColorStop(0, 'rgba(0,0,0,0.6)');
