@@ -152,6 +152,7 @@
 <div id="wrap">
   <canvas id="game" width="900" height="650"></canvas>
   <canvas id="bloom" width="900" height="650"></canvas>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
   <div id="ui-overlay">
     <div id="title-screen">
       <h1>DEATH.RUN</h1>
@@ -194,10 +195,7 @@
 // ============================================================
 //  DEATH.RUN  —  3D Enhanced Edition
 // ============================================================
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-const bloomCanvas = document.getElementById('bloom');
-const bctx = bloomCanvas.getContext('2d');
+let ctx, bctx;
 const W = 900, H = 650;
 
 // Perspective constants
@@ -234,15 +232,7 @@ generateMountains();
 
 // ---- input ----
 const keys = {};
-document.addEventListener('keydown', e => {
-  keys[e.code] = true;
-  if (e.code === 'Space') { e.preventDefault(); if (state !== 'playing') startGame(); }
-});
-document.addEventListener('keyup', e => keys[e.code] = false);
 let touchX = null;
-canvas.addEventListener('touchstart', e => { e.preventDefault(); touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left; if (state !== 'playing') startGame(); });
-canvas.addEventListener('touchmove', e => { e.preventDefault(); touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left; });
-canvas.addEventListener('touchend', () => touchX = null);
 
 // ---- helpers ----
 function lerp(a, b, t) { return a + (b - a) * t; }
@@ -1032,8 +1022,8 @@ function update() {
   }
 
   if (touchX !== null) {
-    const targetX = (touchX / canvas.getBoundingClientRect().width) * W;
-    player.x += (targetX - player.x) * 0.08;
+    // Phaser's pointer.x is already in canvas coordinates
+    player.x += (touchX - player.x) * 0.08;
   }
 
   player.vy *= 0.92;
@@ -1373,19 +1363,75 @@ function drawTitleBG() {
   for (const layer of mountainLayers) layer.offset += 0.3;
 }
 
-// ---- main loop ----
-function gameLoop() {
-  if (state === 'title') {
+// ---- Phaser Scenes ----
+class TitleScene extends Phaser.Scene {
+  constructor() { super({ key: 'TitleScene' }); }
+
+  create() {
+    ctx  = this.sys.game.canvas.getContext('2d');
+    bctx = document.getElementById('bloom').getContext('2d');
+    document.getElementById('title-screen').style.display = 'block';
+    document.getElementById('death-screen').style.display = 'none';
+    document.getElementById('hud-container').style.display = 'none';
+    this.input.keyboard.on('keydown-SPACE', () => this.scene.start('GameScene'));
+    this.input.on('pointerdown', () => this.scene.start('GameScene'));
+  }
+
+  update() {
     drawTitleBG();
-  } else {
+  }
+}
+
+class GameScene extends Phaser.Scene {
+  constructor() { super({ key: 'GameScene' }); }
+
+  create() {
+    ctx  = this.sys.game.canvas.getContext('2d');
+    bctx = document.getElementById('bloom').getContext('2d');
+    startGame();
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.wasd    = this.input.keyboard.addKeys({ up: 'W', down: 'S', left: 'A', right: 'D' });
+    this.shift   = this.input.keyboard.addKeys({ left: 'ShiftLeft', right: 'ShiftRight' });
+    this.input.keyboard.on('keydown-SPACE', () => { if (state === 'dead') startGame(); });
+    this.input.on('pointerdown', (p) => { if (state !== 'playing') startGame(); touchX = p.x; });
+    this.input.on('pointermove', (p) => { if (p.isDown) touchX = p.x; });
+    this.input.on('pointerup',   ()  => { touchX = null; });
+  }
+
+  update() {
+    // Bridge Phaser input to module-level keys[]
+    keys['ArrowUp']    = this.cursors.up.isDown;
+    keys['KeyW']       = this.wasd.up.isDown;
+    keys['ArrowDown']  = this.cursors.down.isDown;
+    keys['KeyS']       = this.wasd.down.isDown;
+    keys['ArrowLeft']  = this.cursors.left.isDown;
+    keys['KeyA']       = this.wasd.left.isDown;
+    keys['ArrowRight'] = this.cursors.right.isDown;
+    keys['KeyD']       = this.wasd.right.isDown;
+    keys['ShiftLeft']  = this.shift.left.isDown;
+    keys['ShiftRight'] = this.shift.right.isDown;
+
     update();
     draw();
     drawBloom();
   }
-  requestAnimationFrame(gameLoop);
 }
 
-gameLoop();
+// ---- Phaser Config ----
+const config = {
+  type: Phaser.CANVAS,
+  canvas: document.getElementById('game'),
+  width: 900,
+  height: 650,
+  scene: [TitleScene, GameScene],
+  render: {
+    clearBeforeRender: false,
+    antialias: false,
+    resolution: 1,
+  },
+  backgroundColor: '#000000',
+};
+const game = new Phaser.Game(config);
 </script>
 </body>
 </html>
