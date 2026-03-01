@@ -54,11 +54,11 @@ export function draw() {
     gameState.flashAlpha *= 0.95;
   }
   ctx.globalAlpha = 0.6;
-  const fogGrd = ctx.createLinearGradient(0, 0, 0, H);
-  fogGrd.addColorStop(0, 'rgba(0,0,0,0)');
-  fogGrd.addColorStop(0.3, 'rgba(0,0,0,0.05)');
-  fogGrd.addColorStop(0.7, 'rgba(0,0,0,0.2)');
-  fogGrd.addColorStop(1, 'rgba(0,0,0,0.6)');
+  const fogGrd = ctx.createLinearGradient(0, 0, W, 0);
+  fogGrd.addColorStop(0, 'rgba(0,0,0,0.6)');
+  fogGrd.addColorStop(0.3, 'rgba(0,0,0,0.2)');
+  fogGrd.addColorStop(0.7, 'rgba(0,0,0,0.05)');
+  fogGrd.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = fogGrd;
   ctx.fillRect(0, 0, W, H);
   ctx.globalAlpha = 0.3;
@@ -99,11 +99,11 @@ export function drawTitleBG() {
   drawCeiling();
   drawFloor();
   ctx.globalAlpha = 0.6;
-  const fogGrd = ctx.createLinearGradient(0, 0, 0, H);
-  fogGrd.addColorStop(0, 'rgba(0,0,0,0)');
-  fogGrd.addColorStop(0.3, 'rgba(0,0,0,0.05)');
-  fogGrd.addColorStop(0.7, 'rgba(0,0,0,0.2)');
-  fogGrd.addColorStop(1, 'rgba(0,0,0,0.6)');
+  const fogGrd = ctx.createLinearGradient(0, 0, W, 0);
+  fogGrd.addColorStop(0, 'rgba(0,0,0,0.6)');
+  fogGrd.addColorStop(0.3, 'rgba(0,0,0,0.2)');
+  fogGrd.addColorStop(0.7, 'rgba(0,0,0,0.05)');
+  fogGrd.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = fogGrd;
   ctx.fillRect(0, 0, W, H);
   ctx.globalAlpha = 1;

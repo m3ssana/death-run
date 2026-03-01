@@ -38,9 +38,9 @@ export class GameScene extends Phaser.Scene {
     this.wasd = this.input.keyboard.addKeys({ up: 'W', down: 'S', left: 'A', right: 'D' });
     this.shift = this.input.keyboard.addKeys({ left: 'ShiftLeft', right: 'ShiftRight' });
     this.input.keyboard.on('keydown-SPACE', () => { if (gameState.state === 'dead') startGame(); });
-    this.input.on('pointerdown', (p) => { if (gameState.state !== 'playing') startGame(); gameState.touchX = p.x; });
-    this.input.on('pointermove', (p) => { if (p.isDown) gameState.touchX = p.x; });
-    this.input.on('pointerup', () => { gameState.touchX = null; });
+    this.input.on('pointerdown', (p) => { if (gameState.state !== 'playing') startGame(); gameState.touchX = p.x; gameState.touchY = p.y; });
+    this.input.on('pointermove', (p) => { if (p.isDown) { gameState.touchX = p.x; gameState.touchY = p.y; } });
+    this.input.on('pointerup', () => { gameState.touchX = null; gameState.touchY = null; });
   }
 
   update() {

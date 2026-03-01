@@ -285,35 +285,35 @@ export function drawObstacle(o) {
       break;
     }
     case 'chain': {
-      const chainLen = o.w * scale;
+      const chainLen = o.h * scale;
       const linkSize = 8 * scale;
       ctx.lineWidth = 3 * scale;
       for (let i = 0; i < chainLen; i += linkSize * 1.2) {
-        const rawCy = Math.sin((i / scale + frameCount * 3) * 0.05) * 25 * scale;
-        const cx = sx + i - chainLen / 2;
-        const cy = sy + rawCy;
-        const metalGrd = ctx.createLinearGradient(cx, cy - linkSize / 2, cx, cy + linkSize / 2);
+        const rawCx = Math.sin((i / scale + frameCount * 3) * 0.05) * 25 * scale;
+        const cx = sx + rawCx;
+        const cy = sy + i - chainLen / 2;
+        const metalGrd = ctx.createLinearGradient(cx - linkSize / 2, cy, cx + linkSize / 2, cy);
         metalGrd.addColorStop(0, '#aaa');
         metalGrd.addColorStop(0.5, '#666');
         metalGrd.addColorStop(1, '#333');
         ctx.strokeStyle = metalGrd;
         ctx.lineWidth = 2 * scale;
         ctx.beginPath();
-        ctx.ellipse(cx, cy, linkSize * 0.5, linkSize * 0.35, 0, 0, Math.PI * 2);
+        ctx.ellipse(cx, cy, linkSize * 0.35, linkSize * 0.5, 0, 0, Math.PI * 2);
         ctx.stroke();
         if (Math.floor(i / linkSize) % 2 === 0) {
           ctx.fillStyle = '#999';
           ctx.beginPath();
-          ctx.moveTo(cx, cy - linkSize * 0.7);
-          ctx.lineTo(cx - 3 * scale, cy - linkSize * 0.2);
-          ctx.lineTo(cx + 3 * scale, cy - linkSize * 0.2);
+          ctx.moveTo(cx - linkSize * 0.7, cy);
+          ctx.lineTo(cx - linkSize * 0.2, cy - 3 * scale);
+          ctx.lineTo(cx - linkSize * 0.2, cy + 3 * scale);
           ctx.closePath();
           ctx.fill();
           ctx.fillStyle = 'rgba(255,255,255,0.15)';
           ctx.beginPath();
-          ctx.moveTo(cx, cy - linkSize * 0.7);
-          ctx.lineTo(cx - 1, cy - linkSize * 0.3);
-          ctx.lineTo(cx + 1, cy - linkSize * 0.3);
+          ctx.moveTo(cx - linkSize * 0.7, cy);
+          ctx.lineTo(cx - linkSize * 0.3, cy - 1);
+          ctx.lineTo(cx - linkSize * 0.3, cy + 1);
           ctx.closePath();
           ctx.fill();
         }

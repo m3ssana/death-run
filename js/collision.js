@@ -22,8 +22,8 @@ export function getObstacleHitbox(o) {
     case 'spike':
       return { x: o.x - o.w / 2, y: o.y, w: o.w, h: o.h };
     case 'chain': {
-      const cy = o.y + Math.sin((player.x - o.x + frameCount * 3) * 0.05) * 25;
-      return { x: o.x - o.w / 2, y: cy - 15, w: o.w, h: 30 };
+      const cx = o.x + Math.sin((player.y - o.y + frameCount * 3) * 0.05) * 25;
+      return { x: cx - 15, y: o.y - o.h / 2, w: 30, h: o.h };
     }
     default:
       return { x: o.x, y: o.y, w: o.w, h: o.h };

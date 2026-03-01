@@ -2,26 +2,26 @@ import { gameState } from './state.js';
 import { rectCollide, getObstacleHitbox } from './collision.js';
 import { spawnObstacle, spawnSoul } from './spawning.js';
 import { updateParticles } from './particles.js';
-import { COMBO_TAUNTS, H, lerp, rand } from './constants.js';
+import { COMBO_TAUNTS, H, PLAY_LEFT, PLAY_RIGHT, PLAY_TOP, PLAY_BOTTOM, lerp, rand } from './constants.js';
 
 export function update() {
   gameState.frameCount++;
   gameState.lavaGlowPhase += 0.02;
 
-  // Player movement
+  // Player movement — primary dodge is Up/Down, secondary is Left/Right
   const moveSpeed = 3;
-  const vertAccel = 0.4;
-  if (gameState.keys['ArrowUp'] || gameState.keys['KeyW']) gameState.player.vy -= vertAccel;
-  if (gameState.keys['ArrowDown'] || gameState.keys['KeyS']) gameState.player.vy += vertAccel;
-  if (gameState.keys['ArrowLeft'] || gameState.keys['KeyA']) {
-    gameState.player.x -= moveSpeed;
+  const horizAccel = 0.4;
+  if (gameState.keys['ArrowUp'] || gameState.keys['KeyW']) {
+    gameState.player.y -= moveSpeed;
     gameState.player.lean = lerp(gameState.player.lean, -5, 0.15);
-  } else if (gameState.keys['ArrowRight'] || gameState.keys['KeyD']) {
-    gameState.player.x += moveSpeed;
+  } else if (gameState.keys['ArrowDown'] || gameState.keys['KeyS']) {
+    gameState.player.y += moveSpeed;
     gameState.player.lean = lerp(gameState.player.lean, 5, 0.15);
   } else {
     gameState.player.lean = lerp(gameState.player.lean, 0, 0.1);
   }
+  if (gameState.keys['ArrowLeft'] || gameState.keys['KeyA']) gameState.player.vx -= horizAccel;
+  if (gameState.keys['ArrowRight'] || gameState.keys['KeyD']) gameState.player.vx += horizAccel;
 
   // Dash
   if ((gameState.keys['ShiftLeft'] || gameState.keys['ShiftRight']) && gameState.dashCooldown === 0) {
@@ -48,10 +48,14 @@ export function update() {
   if (gameState.touchX !== null) {
     gameState.player.x += (gameState.touchX - gameState.player.x) * 0.08;
   }
+  if (gameState.touchY !== null) {
+    gameState.player.y += (gameState.touchY - gameState.player.y) * 0.08;
+  }
 
-  gameState.player.vy *= 0.92;
-  gameState.player.y += gameState.player.vy;
-  gameState.player.x = Math.max(20, Math.min(gameState.player.x, 880));
+  gameState.player.vx *= 0.92;
+  gameState.player.x += gameState.player.vx;
+  gameState.player.x = Math.max(PLAY_LEFT, Math.min(gameState.player.x, PLAY_RIGHT));
+  gameState.player.y = Math.max(PLAY_TOP, Math.min(gameState.player.y, PLAY_BOTTOM));
 
   // Trail
   gameState.player.trail.push({ x: gameState.player.x, y: gameState.player.y });
@@ -61,12 +65,13 @@ export function update() {
   if (gameState.frameCount - gameState.lastObstacle > 100) spawnObstacle();
   if (gameState.frameCount - gameState.lastSoul > 50) spawnSoul();
 
-  // Move obstacles/souls
+  // Move obstacles/souls (right to left)
   for (let i = gameState.obstacles.length - 1; i >= 0; i--) {
     const o = gameState.obstacles[i];
-    o.y += o.vy;
+    o.x += o.vx;
+    o.y += (o.vy || 0);
     o.sinOffset = (o.sinOffset || 0) + 0.1;
-    if (o.y > H + 100) gameState.obstacles.splice(i, 1);
+    if (o.x < -100) gameState.obstacles.splice(i, 1);
   }
 
   for (let i = gameState.souls.length - 1; i >= 0; i--) {
@@ -74,7 +79,7 @@ export function update() {
     s.x += s.vx;
     s.y += s.vy;
     s.rotation += s.rotSpeed;
-    if (s.y > H + 100) gameState.souls.splice(i, 1);
+    if (s.x < -100) gameState.souls.splice(i, 1);
   }
 
   // Collision & collection
@@ -119,7 +124,7 @@ export function update() {
 
 export function startGame() {
   gameState.state = 'playing';
-  gameState.player = { x: 200, y: H / 2, w: 24, h: 32, vy: 0, trail: [], lean: 0 };
+  gameState.player = { x: 120, y: H / 2, w: 24, h: 32, vx: 0, vy: 0, trail: [], lean: 0 };
   gameState.obstacles = [];
   gameState.souls = [];
   gameState.particles = [];

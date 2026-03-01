@@ -13,17 +13,26 @@ export function drawFloor() {
   ctx.fillStyle = floorGrd;
   ctx.fillRect(0, HORIZON, W, H - HORIZON);
 
-  // Perspective grid
+  // Perspective grid — vertical lines converging rightward
   ctx.strokeStyle = 'rgba(255,100,50,0.15)';
   ctx.lineWidth = 1;
   for (let i = 0; i < 20; i++) {
     const t = i / 20;
-    const y = HORIZON + t * (H - HORIZON);
-    const w = W * (1 + t * 0.5);
-    ctx.globalAlpha = t * 0.2;
+    const x = t * W;
+    ctx.globalAlpha = (1 - t) * 0.2;
     ctx.beginPath();
-    ctx.moveTo(-w / 4, y);
-    ctx.lineTo(W + w / 4, y);
+    ctx.moveTo(x, HORIZON);
+    ctx.lineTo(x, H);
+    ctx.stroke();
+  }
+  // Horizontal depth lines
+  for (let i = 0; i < 10; i++) {
+    const t = i / 10;
+    const y = HORIZON + t * (H - HORIZON);
+    ctx.globalAlpha = t * 0.15;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
     ctx.stroke();
   }
   ctx.globalAlpha = 1;

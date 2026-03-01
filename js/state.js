@@ -39,4 +39,5 @@ export const gameState = {
   // Input
   keys: {},
   touchX: null,
+  touchY: null,
 };
