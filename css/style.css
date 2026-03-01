@@ -1,5 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Orbitron:wght@400;700;900&family=Press+Start+2P&display=swap');
 * { margin: 0; padding: 0; box-sizing: border-box; }
+html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
 body {
   background: #000;
   overflow: hidden;
@@ -9,7 +14,12 @@ body {
   height: 100vh;
   font-family: 'Orbitron', monospace;
 }
-#wrap { position: relative; }
+#wrap {
+  position: relative;
+  width: 900px;
+  height: 650px;
+  overflow: hidden;
+}
 canvas {
   display: block;
   border: 3px solid #ff0033;
