@@ -38,9 +38,36 @@ export class GameScene extends Phaser.Scene {
     this.wasd = this.input.keyboard.addKeys({ up: 'W', down: 'S', left: 'A', right: 'D' });
     this.shift = this.input.keyboard.addKeys({ left: 'ShiftLeft', right: 'ShiftRight' });
     this.input.keyboard.on('keydown-SPACE', () => { if (gameState.state === 'dead') startGame(); });
-    this.input.on('pointerdown', (p) => { if (gameState.state !== 'playing') startGame(); gameState.touchX = p.x; gameState.touchY = p.y; });
-    this.input.on('pointermove', (p) => { if (p.isDown) { gameState.touchX = p.x; gameState.touchY = p.y; } });
-    this.input.on('pointerup', () => { gameState.touchX = null; gameState.touchY = null; });
+
+    // Touch input: relative drag + double-tap to dash.
+    // DOUBLE_TAP_MS must be tight enough to feel intentional but loose enough for thumbs.
+    // 300ms matches standard mobile UI conventions.
+    const DOUBLE_TAP_MS = 300;
+    this.input.on('pointerdown', (p) => {
+      if (gameState.state !== 'playing') { startGame(); return; }
+      const now = performance.now();
+      if (now - gameState.lastTapTime < DOUBLE_TAP_MS) {
+        // Double-tap → request dash (consumed by game-loop).
+        gameState.dashRequested = true;
+      }
+      gameState.lastTapTime = now;
+      // Begin a relative drag: remember where the finger landed AND where the player
+      // was at that moment. Every move event then applies the delta to that origin.
+      gameState.touchDragging = true;
+      gameState.touchStartX = p.x;
+      gameState.touchStartY = p.y;
+      gameState.touchDragX = p.x;
+      gameState.touchDragY = p.y;
+      gameState.playerStartX = gameState.player ? gameState.player.x : 0;
+      gameState.playerStartY = gameState.player ? gameState.player.y : 0;
+    });
+    this.input.on('pointermove', (p) => {
+      if (p.isDown && gameState.touchDragging) {
+        gameState.touchDragX = p.x;
+        gameState.touchDragY = p.y;
+      }
+    });
+    this.input.on('pointerup', () => { gameState.touchDragging = false; });
   }
 
   update() {

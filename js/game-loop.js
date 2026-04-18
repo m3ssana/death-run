@@ -2,7 +2,13 @@ import { gameState } from './state.js';
 import { rectCollide, getObstacleHitbox } from './collision.js';
 import { spawnObstacle, spawnSoul } from './spawning.js';
 import { updateParticles } from './particles.js';
+import { worldToScreen } from './perspective.js';
 import { COMBO_TAUNTS, COMBO_MILESTONES, H, PLAY_LEFT, PLAY_RIGHT, PLAY_TOP, PLAY_BOTTOM, lerp, rand } from './constants.js';
+
+// Player hitbox in world units. Shrunk slightly from the visual footprint (24x32)
+// to give players ~2px of forgiveness on each side — feels fair, still brutal.
+const PLAYER_HB_W = 20;
+const PLAYER_HB_H = 26;
 
 export function update() {
   // Game logic only runs during active gameplay
@@ -25,8 +31,10 @@ export function update() {
     if (gameState.keys['ArrowLeft'] || gameState.keys['KeyA']) gameState.player.vx -= horizAccel;
     if (gameState.keys['ArrowRight'] || gameState.keys['KeyD']) gameState.player.vx += horizAccel;
 
-    // Dash
-    if ((gameState.keys['ShiftLeft'] || gameState.keys['ShiftRight']) && gameState.dashCooldown === 0) {
+    // Dash — triggered by Shift keys OR mobile double-tap (dashRequested flag).
+    const dashPressed =
+      gameState.keys['ShiftLeft'] || gameState.keys['ShiftRight'] || gameState.dashRequested;
+    if (dashPressed && gameState.dashCooldown === 0) {
       gameState.dashCooldown = 60;
       gameState.invincible = 15;
       gameState.screenShake = 6;
@@ -44,13 +52,18 @@ export function update() {
         });
       }
     }
+    // Always consume the one-shot dash request, even if dashCooldown blocked it,
+    // so a queued request doesn't fire as soon as the cooldown expires.
+    gameState.dashRequested = false;
 
-    // Touch input
-    if (gameState.touchX !== null) {
-      gameState.player.x += (gameState.touchX - gameState.player.x) * 0.08;
-    }
-    if (gameState.touchY !== null) {
-      gameState.player.y += (gameState.touchY - gameState.player.y) * 0.08;
+    // Touch input: relative drag. Player position = start position + finger delta.
+    // Canvas pixels and world units have a 1:1 mapping since canvas is 900×650 and
+    // world is 900×650, so no scaling needed. Clamping to play-area happens below.
+    if (gameState.touchDragging) {
+      const dx = gameState.touchDragX - gameState.touchStartX;
+      const dy = gameState.touchDragY - gameState.touchStartY;
+      gameState.player.x = gameState.playerStartX + dx;
+      gameState.player.y = gameState.playerStartY + dy;
     }
 
     gameState.player.vx *= 0.92;
@@ -86,7 +99,12 @@ export function update() {
       o.y += (o.vy || 0);
       o.sinOffset = (o.sinOffset || 0) + 0.1;
       if (o.x < -100) {
+        // Obstacle successfully dodged — credit the dodge and increment combo.
+        // Combo is meant to reward skill (consecutive dodges), not luck (soul collection).
+        // Per README: "Dodge 5+ obstacles in a row and receive increasingly unhinged taunts".
         gameState.demonsDodged++;
+        gameState.combo++;
+        gameState.maxCombo = Math.max(gameState.maxCombo, gameState.combo);
         gameState.obstacles.splice(i, 1);
       }
     }
@@ -99,11 +117,27 @@ export function update() {
       if (s.x < -100) gameState.souls.splice(i, 1);
     }
 
-    // Collision & collection
+    // Collision & collection — done in SCREEN space so hitboxes match what the player sees.
+    // Both player and obstacle shrink with perspective (worldToScreen scale), so a pillar
+    // drawn at 70% size has a 70% hitbox. Previously hitboxes ran in raw world units
+    // while visuals shrank with depth, causing "invisible" deaths and unfair hits.
+    const pScreen = worldToScreen(gameState.player.x, gameState.player.y);
+    const pHbW = PLAYER_HB_W * pScreen.scale;
+    const pHbH = PLAYER_HB_H * pScreen.scale;
+    const pHbX = pScreen.sx - pHbW / 2;
+    const pHbY = pScreen.sy - pHbH / 2;
+
     for (let i = gameState.obstacles.length - 1; i >= 0; i--) {
       const o = gameState.obstacles[i];
-      const hb = getObstacleHitbox(o);
-      if (rectCollide(gameState.player.x - 12, gameState.player.y - 16, 24, 32, hb.x, hb.y, hb.w, hb.h)) {
+      const hb = getObstacleHitbox(o); // world-space
+      const oScreen = worldToScreen(o.x, o.y);
+      // Map world-space hitbox → screen-space: offsets are relative to o.x/o.y and
+      // scale with perspective, just like the rendered visual does.
+      const oHbSx = oScreen.sx + (hb.x - o.x) * oScreen.scale;
+      const oHbSy = oScreen.sy + (hb.y - o.y) * oScreen.scale;
+      const oHbSw = hb.w * oScreen.scale;
+      const oHbSh = hb.h * oScreen.scale;
+      if (rectCollide(pHbX, pHbY, pHbW, pHbH, oHbSx, oHbSy, oHbSw, oHbSh)) {
         if (gameState.invincible === 0) {
           die(o.type.name);
           return;

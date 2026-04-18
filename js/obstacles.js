@@ -288,9 +288,13 @@ export function drawObstacle(o) {
       const chainLen = o.h * scale;
       const linkSize = 8 * scale;
       ctx.lineWidth = 3 * scale;
+      // Whole chain swings as a rigid pendulum so the hitbox (collision.js 'chain' case)
+      // can exactly match the visual. Previous per-link traveling-wave animation
+      // meant the rendered chain S-curved through positions the hitbox didn't cover
+      // (and vice versa), causing "invisible" deaths.
+      const swing = Math.sin(frameCount * 0.05 + o.sinOffset) * 25 * scale;
       for (let i = 0; i < chainLen; i += linkSize * 1.2) {
-        const rawCx = Math.sin((i / scale + frameCount * 3) * 0.05) * 25 * scale;
-        const cx = sx + rawCx;
+        const cx = sx + swing;
         const cy = sy + i - chainLen / 2;
         const metalGrd = ctx.createLinearGradient(cx - linkSize / 2, cy, cx + linkSize / 2, cy);
         metalGrd.addColorStop(0, '#aaa');

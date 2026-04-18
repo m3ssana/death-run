@@ -49,6 +49,20 @@ export const gameState = {
 
   // Input
   keys: {},
-  touchX: null,
-  touchY: null,
+
+  // Touch input uses RELATIVE DRAG: player moves by (currentTouch - touchStart)
+  // from the player's position at touch-down. This prevents the "finger-on-obstacle
+  // pushes player into obstacle" bug of an absolute drag-to-position model.
+  touchDragging: false,
+  touchStartX: 0,     // finger position when touch began (canvas pixels)
+  touchStartY: 0,
+  playerStartX: 0,    // player position when touch began (world units)
+  playerStartY: 0,
+  touchDragX: 0,      // current finger position (canvas pixels)
+  touchDragY: 0,
+
+  // Mobile dash gesture: double-tap within DOUBLE_TAP_MS triggers a dash.
+  // dashRequested is a one-shot flag consumed by the game loop.
+  lastTapTime: 0,
+  dashRequested: false,
 };
