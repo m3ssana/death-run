@@ -15,7 +15,7 @@ export function draw() {
     ctx.translate(sx, sy);
     gameState.screenShake *= 0.85;
   }
-  ctx.fillStyle = '#000';
+  ctx.fillStyle = '#f7e4c4'; // warm cream base (was #000); ceiling/floor paint over this
   ctx.fillRect(0, 0, W, H);
   drawMountains();
   drawCeiling();
@@ -49,7 +49,8 @@ export function draw() {
   }
   ctx.globalAlpha = 1;
   if (gameState.flashAlpha > 0) {
-    ctx.fillStyle = `rgba(255,50,50,${gameState.flashAlpha})`;
+    // Tomato-sauce splash flash on hit (was harsh red)
+    ctx.fillStyle = `rgba(204,34,34,${gameState.flashAlpha})`;
     ctx.fillRect(0, 0, W, H);
     gameState.flashAlpha *= 0.95;
   }
@@ -61,14 +62,17 @@ export function draw() {
     gameState.comboFlashAlpha *= 0.80;
     if (gameState.comboFlashAlpha < 0.005) gameState.comboFlashAlpha = 0;
   }
+  // Warm cream atmospheric haze from left edge (was black vignette)
   ctx.globalAlpha = 0.6;
   const fogGrd = ctx.createLinearGradient(0, 0, W, 0);
-  fogGrd.addColorStop(0, 'rgba(0,0,0,0.6)');
-  fogGrd.addColorStop(0.3, 'rgba(0,0,0,0.2)');
-  fogGrd.addColorStop(0.7, 'rgba(0,0,0,0.05)');
-  fogGrd.addColorStop(1, 'rgba(0,0,0,0)');
+  fogGrd.addColorStop(0, 'rgba(247,228,196,0.55)');
+  fogGrd.addColorStop(0.3, 'rgba(247,228,196,0.2)');
+  fogGrd.addColorStop(0.7, 'rgba(247,228,196,0.05)');
+  fogGrd.addColorStop(1, 'rgba(247,228,196,0)');
   ctx.fillStyle = fogGrd;
   ctx.fillRect(0, 0, W, H);
+  // Flour dust specks drifting across the scene
+  ctx.fillStyle = 'rgba(255,245,220,0.5)';
   ctx.globalAlpha = 0.3;
   for (let i = 0; i < 30; i++) {
     const gx = (gameState.frameCount * 0.3 + i * 30) % (W + 20) - 10;
@@ -82,15 +86,17 @@ export function draw() {
 
 export function drawBloom() {
   const { ctx, bctx } = gameState;
+  // Bloom canvas must stay dark-base so screen-blend only ADDS light (never subtracts).
   bctx.fillStyle = 'rgba(0,0,0,0.9)';
   bctx.fillRect(0, 0, W, H);
   for (const l of gameState.lightSources) {
     const { sx, sy, scale } = worldToScreen(l.x, l.y);
     const lr = (l.life / l.maxLife) * l.size * scale;
     const lgrd = bctx.createRadialGradient(sx, sy, 0, sx, sy, lr);
-    lgrd.addColorStop(0, `rgba(255,150,50,${(l.life / l.maxLife) * 0.8})`);
-    lgrd.addColorStop(0.5, `rgba(255,100,0,${(l.life / l.maxLife) * 0.3})`);
-    lgrd.addColorStop(1, 'rgba(255,50,0,0)');
+    // Softer warm yellow/orange halo (was red-orange ember)
+    lgrd.addColorStop(0, `rgba(255,209,130,${(l.life / l.maxLife) * 0.8})`);
+    lgrd.addColorStop(0.5, `rgba(255,170,80,${(l.life / l.maxLife) * 0.3})`);
+    lgrd.addColorStop(1, 'rgba(255,140,60,0)');
     bctx.fillStyle = lgrd;
     bctx.fillRect(sx - lr, sy - lr, lr * 2, lr * 2);
   }
@@ -101,17 +107,18 @@ export function drawBloom() {
 
 export function drawTitleBG() {
   const { ctx, frameCount, lavaGlowPhase, mountainLayers } = gameState;
-  ctx.fillStyle = '#000';
+  ctx.fillStyle = '#f7e4c4'; // warm cream (was #000)
   ctx.fillRect(0, 0, W, H);
   drawMountains();
   drawCeiling();
   drawFloor();
+  // Cream-tinted atmospheric haze (was black vignette)
   ctx.globalAlpha = 0.6;
   const fogGrd = ctx.createLinearGradient(0, 0, W, 0);
-  fogGrd.addColorStop(0, 'rgba(0,0,0,0.6)');
-  fogGrd.addColorStop(0.3, 'rgba(0,0,0,0.2)');
-  fogGrd.addColorStop(0.7, 'rgba(0,0,0,0.05)');
-  fogGrd.addColorStop(1, 'rgba(0,0,0,0)');
+  fogGrd.addColorStop(0, 'rgba(247,228,196,0.55)');
+  fogGrd.addColorStop(0.3, 'rgba(247,228,196,0.2)');
+  fogGrd.addColorStop(0.7, 'rgba(247,228,196,0.05)');
+  fogGrd.addColorStop(1, 'rgba(247,228,196,0)');
   ctx.fillStyle = fogGrd;
   ctx.fillRect(0, 0, W, H);
   ctx.globalAlpha = 1;

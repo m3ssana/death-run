@@ -47,7 +47,7 @@ export function update() {
           life: 25,
           maxLife: 25,
           size: rand(2, 5),
-          color: '#ff3300',
+          color: '#ffb347', // cheese-orange dash sparks (was fire-red #ff3300)
           glow: true,
         });
       }
@@ -154,7 +154,7 @@ export function update() {
         for (let j = 0; j < 10; j++) {
           gameState.particles.push({
             x: s.x, y: s.y, vx: rand(-3, 3), vy: rand(-3, 0), life: 30, maxLife: 30,
-            size: rand(2, 4), color: '#aa00ff', glow: false,
+            size: rand(2, 4), color: '#ffb347', glow: false, // warm pepperoni-collection sparkle (was purple #aa00ff)
           });
         }
         gameState.souls.splice(i, 1);
@@ -223,7 +223,7 @@ export function die(cause) {
       vy: Math.sin(angle) * speed,
       life: 40, maxLife: 40,
       size: rand(3, 8),
-      color: '#ff3300',
+      color: '#cc2222', // tomato-sauce splat on delivery fail (was fire-red #ff3300)
       glow: true,
     });
   }

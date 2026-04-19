@@ -4,43 +4,43 @@ Execution checklist derived from [SPEC.md](./SPEC.md). Work top-to-bottom; each 
 
 ---
 
-## Stage 1 — Strings Pass (`index.html` + `js/constants.js`)
+## Stage 1 — Strings Pass (`index.html` + `js/constants.js`) ✅ COMPLETE
 
 ### `index.html`
-- [ ] Line 6: `<title>DEATH.RUN</title>` → `<title>PIZZA.RUN</title>`
-- [ ] Line 16: title heading `DEATH.RUN` → `PIZZA.RUN`
-- [ ] Line 17: tagline `// ESCAPE HELL OR DIE TRYING //` → `// DELIVER HOT OR DIE TRYIN' //`
-- [ ] Line 18: start prompt `[ PRESS SPACE TO DESCEND ]` → `[ PRESS SPACE TO SLICE ]`
-- [ ] Line 21: death heading `⚰ WASTED ⚰` → `🍕 DROPPED 🍕`
-- [ ] Line 24: stat label `SOULS COLLECTED:` → `PEPPERONIS COLLECTED:`
-- [ ] Line 25: stat label `OBSTACLES EVADED:` → `HAZARDS DODGED:`
-- [ ] Line 27: stat label `CAUSE OF DEATH:` → `DELIVERY FAILED BY:`
-- [ ] Line 27: default cause `SKILL ISSUE` → `DOUGH ISSUES`
-- [ ] Line 29: restart prompt `[ PRESS SPACE TO DESCEND AGAIN ]` → `[ PRESS SPACE TO DELIVER AGAIN ]`
-- [ ] Line 37: HUD label `SOULS` → `PEPPERONIS` (keep `DISTANCE`, `SPEED`, `COMBO`)
-- [ ] Update favicon link (if present) to a pizza-themed icon
+- [x] Line 6: `<title>DEATH.RUN — Escape Hell</title>` → `<title>PIZZA.RUN — Deliver Hot</title>`
+- [x] Line 16: title heading `DEATH.RUN` → `PIZZA.RUN`
+- [x] Line 17: tagline `// ESCAPE HELL OR DIE TRYING //` → `// DELIVER HOT OR DIE TRYIN' //`
+- [x] Line 18: start prompt `[ PRESS SPACE TO DESCEND ]` → `[ PRESS SPACE TO SLICE ]`
+- [x] Line 21: death heading `⚰ WASTED ⚰` → `🍕 DROPPED 🍕`
+- [x] Line 24: stat label `SOULS COLLECTED:` → `PEPPERONIS COLLECTED:`
+- [x] Line 25: stat label `OBSTACLES EVADED:` → `HAZARDS DODGED:`
+- [x] Line 27: stat label `CAUSE OF DEATH:` → `DELIVERY FAILED BY:`
+- [x] Line 27: default cause `SKILL ISSUE` → `DOUGH ISSUES`
+- [x] Line 29: restart prompt `[ PRESS SPACE TO DESCEND AGAIN ]` → `[ PRESS SPACE TO DELIVER AGAIN ]`
+- [x] Line 37: HUD label `SOULS` → `PEPPERONIS` (keep `DISTANCE`, `SPEED`, `COMBO`)
+- [ ] ~~Update favicon link~~ — no `<link rel="icon">` exists in index.html; deferred to a polish pass when a favicon asset is added
 
 ### `js/constants.js` — `OBSTACLE_TYPES` (names only, keep `pattern` keys unchanged)
-- [ ] `HELLFIRE PILLAR` → `OVEN FLAME` (pattern: `pillar`)
-- [ ] `DEMON SKULL` → `MEATBALL OF DOOM` (pattern: `skull`)
-- [ ] `BONE SAW` → `PIZZA CUTTER` (pattern: `saw`)
-- [ ] `LAVA GEYSER` → `TOMATO SAUCE GEYSER` (pattern: `geyser`)
-- [ ] `BLOOD SPIKE` → `PARMESAN SHARD` (pattern: `spike`)
-- [ ] `CHAIN WHIP` → `MOZZARELLA STRETCH` (pattern: `chain`)
+- [x] `HELLFIRE PILLAR` → `OVEN FLAME` (pattern: `pillar`)
+- [x] `DEMON SKULL` → `MEATBALL OF DOOM` (pattern: `skull`)
+- [x] `BONE SAW` → `PIZZA CUTTER` (pattern: `saw`)
+- [x] `LAVA GEYSER` → `TOMATO SAUCE GEYSER` (pattern: `geyser`)
+- [x] `BLOOD SPIKE` → `PARMESAN SHARD` (pattern: `spike`)
+- [x] `CHAIN WHIP` → `MOZZARELLA STRETCH` (pattern: `chain`)
 
 ### `js/constants.js` — `COMBO_TAUNTS` (9 entries, indices 0–8)
-- [ ] [0] `''` (unchanged)
-- [ ] [1] `''` (unchanged)
-- [ ] [2] `'NOT BAD...'` (unchanged — tone-neutral)
-- [ ] [3] `'UNHOLY'` → `'SAUCY!'`
-- [ ] [4] `'DEMONIC!'` → `'EXTRA CHEESE!!'`
-- [ ] [5] `'BLASPHEMOUS!!'` → `'DELIZIOSO!!!'`
-- [ ] [6] `'SACRILEGE!!!'` → `"CHEF'S KISS!!!!"`
-- [ ] [7] `'GODKILLER!!!!'` → `'PIZZA GOD!!!!!'`
-- [ ] [8] `'BEYOND DEATH!!!!!'` → `'LEGENDARY DELIVERY!!!!!'`
+- [x] [0] `''` (unchanged)
+- [x] [1] `''` (unchanged)
+- [x] [2] `'NOT BAD...'` (unchanged — tone-neutral)
+- [x] [3] `'UNHOLY'` → `'SAUCY!'`
+- [x] [4] `'DEMONIC!'` → `'EXTRA CHEESE!!'`
+- [x] [5] `'BLASPHEMOUS!!'` → `'DELIZIOSO!!!'`
+- [x] [6] `'SACRILEGE!!!'` → `"CHEF'S KISS!!!!"`
+- [x] [7] `'GODKILLER!!!!'` → `'PIZZA GOD!!!!!'`
+- [x] [8] `'BEYOND DEATH!!!!!'` → `'LEGENDARY DELIVERY!!!!!'`
 
 ### `js/game-loop.js` — death-cause string formatting sanity check
-- [ ] Verify `CAUSE OF DEATH` field (set from `obstacle.type.name` at die()) reads cleanly with new obstacle names — e.g., `DELIVERY FAILED BY: MEATBALL OF DOOM`. Adjust any hardcoded string formatting if the new names break layout.
+- [x] Verified: `die(cause)` at line 211 receives `o.type.name` directly (line 142); no hardcoded formatting. New obstacle names (max length 19 chars: `TOMATO SAUCE GEYSER`) render cleanly in `DELIVERY FAILED BY:` field without code changes.
 
 ### Stage 1 verification
 - [ ] Load game — title screen, HUD labels, and death screen all read as PIZZA.RUN
@@ -50,51 +50,69 @@ Execution checklist derived from [SPEC.md](./SPEC.md). Work top-to-bottom; each 
 
 ---
 
-## Stage 2 — Palette Pass
+## Stage 2 — Palette Pass ✅ COMPLETE
 
 ### `js/constants.js` — `OBSTACLE_TYPES` colors
-- [ ] `pillar` color → `#ff8800` (warm orange)
-- [ ] `skull` color → `#7a3a1a` (meatball brown)
-- [ ] `saw` color → `#e0e0e0` (chrome)
-- [ ] `geyser` color → `#cc2222` (tomato red)
-- [ ] `spike` color → `#f4d35e` (parmesan tan)
-- [ ] `chain` color → `#fff8dc` (cheese cream)
+- [x] `pillar` color → `#ff8800` (warm orange)
+- [x] `skull` color → `#7a3a1a` (meatball brown)
+- [x] `saw` color → `#e0e0e0` (chrome)
+- [x] `geyser` color → `#cc2222` (tomato red)
+- [x] `spike` color → `#f4d35e` (parmesan tan)
+- [x] `chain` color → `#fff8dc` (cheese cream)
 
 ### `css/style.css`
-- [ ] Body background: dark/black → `#f7e4c4` (warm cream)
-- [ ] Title glow: `#ff0033` → `#e63946` tomato red + `#ffd166` yellow outline
-- [ ] HUD primary accent: `#ff0033` → `#e63946`
-- [ ] HUD secondary accent: `#ffaa00` → `#2a9d8f` (basil green)
-- [ ] Any remaining neon-red borders → warm palette equivalents
+- [x] Body background: `#000` → `#f7e4c4` (warm cream)
+- [x] Title glow: `#ff0033` → `#e63946` tomato red + `#ffd166` yellow outline (implemented via layered text-shadow offsets)
+- [x] HUD primary accent: `#ff0033` → `#e63946`
+- [x] HUD secondary accent: `#ffaa00` → `#2a9d8f` (basil green) for start/restart prompts & speed panel
+- [x] Souls/pepperoni HUD value: `#aa00ff` → `#c8102e` (pepperoni red)
+- [x] HUD panel bg: `rgba(0,0,0,0.4)` → `rgba(255,245,220,0.45)` (cream)
+- [x] Death screen stat-border, colors, and bg tint → warm palette
+- [x] `#game` canvas border + box-shadow retinted to tomato/yellow
 
 ### `js/souls.js`
-- [ ] Collectible glow tint: `#aa00ff` purple → `rgba(255, 180, 100, 0.5)` warm
+- [x] Collectible glow aura: `#aa00ff` purple → `rgba(255,180,100,...)` warm
+- [x] Core sphere gradient: purple stops → pepperoni-red stops (shape intact; full disc redraw in Stage 4)
+- [x] Wisps, highlight, floor reflection → warm tints
 
-### `js/particles.js`
-- [ ] Dash/death particle color: `#ff3300` fire-red → `#ffb347` cheese-orange (+ `#cc2222` sauce-splash variant)
-- [ ] Flour-dust background particles: retint to warm cream/white
-- [ ] Remove fire-red particle emissions entirely
+### Particle color sites (live in `js/game-loop.js`, not `js/particles.js` which is update-only)
+- [x] Dash particles (game-loop.js:50) `#ff3300` → `#ffb347` (cheese-orange)
+- [x] Pepperoni collection particles (game-loop.js:157) `#aa00ff` → `#ffb347` (warm)
+- [x] Death explosion particles (game-loop.js:226) `#ff3300` → `#cc2222` (tomato-sauce splat)
+- [x] Flour-dust drift loop in `js/rendering.js` retinted to `rgba(255,245,220,0.5)`
+- [x] Ceiling "dust" particles in `js/rendering-helpers.js` retinted to `rgba(255,245,220,0.18)`
 
 ### `js/rendering-helpers.js` (tint only — shape changes in Stage 3)
-- [ ] Floor gradient: lava brown/red → `#d9a441` pizzeria-tile yellow
-- [ ] Ceiling gradient: stalactite purple/black → `#f4e1c1` cream
-- [ ] Mountain layers: dark blue silhouettes → `#9cc5a1 / #7eb382 / #5e9668` green hills
+- [x] Floor gradient: lava brown/red → `#e8b855 → #d9a441 → #c8933a → #a8791f` pizzeria-tile yellow
+- [x] Floor perspective grid + cracks retinted to warm brown (`rgba(122,58,26,0.2)` / `rgba(90,60,30,0.25)`)
+- [x] Floor glow pulse: lava orange-red → warm oven-glow `rgba(255,209,102,0.55)`
+- [x] Ceiling gradient: purple/black → `#f4e1c1 → #e8d2a8 → #ddc695 → #c8b077` cream
+- [x] Ceiling fixtures (stroke `#4a3a2a` → `#8a6a4a`, fill `#5a4a3a` → `#a08060`)
+- [x] Ceiling drips: brown → `rgba(255,209,102,0.55)` warm bulb-glow
+- [x] Mountain layers: `['#1a3a5a','#2a4a6a','#3a5a7a']` → `['#9cc5a1','#7eb382','#5e9668']` green hills
+- [x] Mountain edge highlight: blue → green `rgba(180,220,180,...)`
 
 ### `js/rendering.js`
-- [ ] Grep for hardcoded color refs to background/bloom; soften bloom tint to warm yellow/orange
+- [x] Canvas base clear (`draw` + `drawTitleBG`): `#000` → `#f7e4c4` cream
+- [x] Atmospheric fog gradient: black → warm cream `rgba(247,228,196,...)`
+- [x] Flash-on-hit: `rgba(255,50,50,...)` → `rgba(204,34,34,...)` (tomato-sauce splash)
+- [x] Bloom light halo: `rgba(255,150,50,...) → rgba(255,100,0,...) → rgba(255,50,0,0)` → softer warm yellow `rgba(255,209,130,...) → rgba(255,170,80,...) → rgba(255,140,60,0)`
+- [x] Bloom canvas base kept dark (screen-blend requires dark base; documented inline)
 
 ### Stage 2 verification
-- [ ] Title + gameplay read as bright cartoony (no black/neon chrome)
-- [ ] No fire-red particles during dash or death
+- [ ] Load game — title + gameplay read as bright cartoony (no black/neon chrome, no purple orbs, no fire-red)
+- [ ] Dash → warm cheese-orange sparks (not fire-red)
+- [ ] Collect pepperoni → warm orange sparkle (not purple)
+- [ ] Die → tomato-sauce splat (reddish but warm, not harsh neon)
 - [ ] Commit: `rebrand(stage-2): bright cartoony palette swap`
 
 ---
 
-## Stage 3 — Environment Redraws (`js/rendering-helpers.js`)
+## Stage 3 — Environment Redraws (`js/rendering-helpers.js`, `js/mountains.js`) ✅ COMPLETE
 
-- [ ] `drawFloor`: add black-and-white checkered overlay on yellow tile base, fading to vanishing point
-- [ ] `drawCeiling`: replace stalactites with hanging silhouettes (pots, string lights); keep drip hook as swaying string lights
-- [ ] `drawMountains`: rolling green hills in 3 parallax layers (replaces hellscape silhouettes)
+- [x] `drawFloor`: added dark-tile checkered overlay (11 bands, quadratic depth compression, widening cells near camera) on yellow pizzeria-tile base; grout seams between bands; removed old cracks/perspective-grid lines; warm oven-glow pulse retained
+- [x] `drawCeiling`: replaced stalactites with alternating hanging kitchen items — cast-iron pots (trapezoid body + rim + side handles + sheen), pans (ellipse body + protruding handle), warm string-light bulbs (soft radial halo + filament highlight + tiny cap). Cords sway via existing `sin(frameCount * 0.05 + i)` rhythm + gentle horizontal drift for breathing feel. Flour-dust drift preserved.
+- [x] `generateMountains` (in `js/mountains.js`): replaced jagged `Math.random()` spikes with layered sine-wave rolling hills — primary wave (wavelength 260/190/120 per layer, back→front) + secondary wave (0.35× wavelength, 0.25× amplitude) for organic asymmetry; denser sampling on near layers; phase-staggered between layers so crests don't line up
 
 ### Stage 3 verification
 - [ ] Floor reads as pizzeria tile, ceiling as kitchen, background as daylight hills
@@ -103,12 +121,15 @@ Execution checklist derived from [SPEC.md](./SPEC.md). Work top-to-bottom; each 
 
 ---
 
-## Stage 4 — Collectible Redraw (`js/souls.js`)
+## Stage 4 — Collectible Redraw (`js/souls.js`) ✅ COMPLETE
 
-- [ ] Replace purple orb with red pepperoni disc (`#c8102e`)
-- [ ] Add 4–5 darker brown specks (`#6b2b1a`) on face
-- [ ] Replace energy-tendril animation with slight tumble/rotation
-- [ ] Swap collection particles purple → warm orange/yellow
+- [x] Replaced purple/red orb with pepperoni disc (face gradient `#e6344a → #c8102e → #8a1f24`, darker `#8a1f24` crust-rim ring for dimension)
+- [x] 5 darker brown specks (`#6b2b1a`) on face at fixed radial positions; specks rotate with `s.rotation` so they track the spin; fade out when disc is edge-on (`faceVisible = |cos(rotation)|`)
+- [x] Replaced energy-tendril wisps with tumble/rotation — disc X-scale oscillates `0.65 + 0.35 * cos(s.rotation)` via existing `rotSpeed` (0.02–0.08/frame), so it always reads as a pepperoni (never fully edge-on)
+- [x] Warm halo aura (`rgba(255,180,100,...)`) replaces old purple magical aura
+- [x] Grease-sheen glint highlight on face (warm cream ellipse, fades with faceVisible)
+- [x] Soft floor shadow (ellipse, X-width tracks tumble)
+- [x] Collection particles swap → done in Stage 2 (`game-loop.js:157` → `#ffb347`)
 
 ### Stage 4 verification
 - [ ] Collectibles read instantly as pepperonis
@@ -117,19 +138,22 @@ Execution checklist derived from [SPEC.md](./SPEC.md). Work top-to-bottom; each 
 
 ---
 
-## Stage 5 — Player Redraw (`js/player.js`)
+## Stage 5 — Player Redraw (`js/player.js`) ✅ COMPLETE
 
-- [ ] Remove `drawSkull3D` call from player head
-- [ ] Remove flame eyes (dash cooldown visual)
-- [ ] Remove trailing skulls
-- [ ] Draw triangular pizza-slice silhouette (golden crust edge, tomato middle, cheese/pepperoni spots)
-- [ ] Draw two white sneakers with black laces; add stepping bob when moving
-- [ ] Add googly eyes (white circles + shifting black pupils)
-- [ ] Dash state: squint eyes, motion lines, sauce-droplet trail (replaces skull trail)
-- [ ] Change dash i-frame outline: red → yellow/gold
-- [ ] Replace skull floor-reflection with simple oval soft-shadow
-- [ ] Preserve 24×32 visual hitbox / 20×26 world-space hitbox — do NOT change collision dimensions
-- [ ] Preserve depth scaling via `worldToScreen` (player scales with perspective — do not bypass)
+- [x] Removed `drawSkull3D` import + all call sites (head, trail, floor reflection); skeleton spine/ribs/arms gone
+- [x] Removed flame-eyes dash cue — replaced with squint slits
+- [x] Removed trailing skulls — replaced with sauce-droplet ellipses (tomato `#cc2222` normally, gold `#ffd166` during dash)
+- [x] Triangular pizza-slice silhouette: tip-up triangle (baseL→tip→baseR), cheese→tomato body gradient (`#ffe3a3 → #f4c053 → #d94a2a → #a8321c`)
+- [x] Golden crust curved arc beneath the slice base (quadratic bulge, `#e0a94a → #995c1e` gradient)
+- [x] 3 pepperoni spots (`#c8102e`) + 4 small cream cheese bubbles for texture
+- [x] Two white sneakers below the crust with black laces (X cross-hatch), dark sole, subtle body gradient; alternating step animation (`stepPhase = sin(frameCount * 0.25)`, each shoe rises 2.5px when opposite shoe plants)
+- [x] Stepping body bob when moving (`|bodyBob| = |stepPhase| * 1.2`)
+- [x] Googly eyes: white circles + thin black outline + black pupil + catchlight; pupils track `player.vx` direction for character
+- [x] Dash state: squinted eyes (flat ellipse + horizontal slit line), motion lines behind player (gold warm `rgba(255,209,102,0.8)`), sauce-droplet trail recolors gold
+- [x] Dash i-frame outline: gold `#ffd166` (was red `#ff2233`)
+- [x] Soft oval floor shadow replaces flipped-skull reflection
+- [x] Hitbox untouched — collision dimensions live in `game-loop.js` (PLAYER_HB_W/H) and were not modified
+- [x] Depth scaling preserved — all draws use `* scale` from `worldToScreen`
 
 ### Stage 5 verification
 - [ ] Player reads as a cute pizza slice at a glance

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DEATH.RUN — Escape Hell</title>
+<title>PIZZA.RUN — Deliver Hot</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -13,20 +13,20 @@
   <canvas id="bloom" width="900" height="650"></canvas>
   <div id="ui-overlay">
     <div id="title-screen">
-      <h1>DEATH.RUN</h1>
-      <div class="subtitle">// ESCAPE HELL OR DIE TRYING //</div>
-      <div class="start-prompt">[ PRESS SPACE TO DESCEND ]</div>
+      <h1>PIZZA.RUN</h1>
+      <div class="subtitle">// DELIVER HOT OR DIE TRYIN' //</div>
+      <div class="start-prompt">[ PRESS SPACE TO SLICE ]</div>
     </div>
     <div id="death-screen">
-      <h2>⚰ WASTED ⚰</h2>
+      <h2>🍕 DROPPED 🍕</h2>
       <div class="stats">
         <div><span style="color:#aaa">DISTANCE:</span> <span id="final-dist">0</span>m</div>
-        <div><span style="color:#aaa">SOULS COLLECTED:</span> <span id="final-souls">0</span></div>
-        <div><span style="color:#aaa">OBSTACLES EVADED:</span> <span id="final-dodged">0</span></div>
+        <div><span style="color:#aaa">PEPPERONIS COLLECTED:</span> <span id="final-souls">0</span></div>
+        <div><span style="color:#aaa">HAZARDS DODGED:</span> <span id="final-dodged">0</span></div>
         <div><span style="color:#aaa">PEAK COMBO:</span> <span id="final-combo">0</span>x</div>
-        <div style="margin-top:10px; padding-top:10px; border-top: 1px solid #ff3366;"><span style="color:#aaa">CAUSE OF DEATH:</span> <span id="death-cause">SKILL ISSUE</span></div>
+        <div style="margin-top:10px; padding-top:10px; border-top: 1px solid #ff3366;"><span style="color:#aaa">DELIVERY FAILED BY:</span> <span id="death-cause">DOUGH ISSUES</span></div>
       </div>
-      <div class="restart-prompt">[ PRESS SPACE TO DESCEND AGAIN ]</div>
+      <div class="restart-prompt">[ PRESS SPACE TO DELIVER AGAIN ]</div>
     </div>
     <div id="hud-container">
       <div class="hud-panel">
@@ -34,7 +34,7 @@
         <div class="hud-value"><span id="hud-dist">0</span>m</div>
       </div>
       <div class="hud-panel souls">
-        <div class="hud-label">SOULS</div>
+        <div class="hud-label">PEPPERONIS</div>
         <div class="hud-value">✦ <span id="hud-souls">0</span></div>
       </div>
       <div class="hud-panel speed">

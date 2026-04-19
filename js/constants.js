@@ -16,12 +16,12 @@ export const PLAY_BOTTOM = H - 20;
 
 // Obstacle type definitions
 export const OBSTACLE_TYPES = [
-  { name: 'HELLFIRE PILLAR', color: '#ff2200', w: 30, h: 80, pattern: 'pillar' },
-  { name: 'DEMON SKULL', color: '#ff0066', w: 44, h: 44, pattern: 'skull' },
-  { name: 'BONE SAW', color: '#ccccaa', w: 50, h: 20, pattern: 'saw' },
-  { name: 'LAVA GEYSER', color: '#ff6600', w: 25, h: 120, pattern: 'geyser' },
-  { name: 'BLOOD SPIKE', color: '#990022', w: 15, h: 65, pattern: 'spike' },
-  { name: 'CHAIN WHIP', color: '#888888', w: 8, h: 200, pattern: 'chain' },
+  { name: 'OVEN FLAME', color: '#ff8800', w: 30, h: 80, pattern: 'pillar' },
+  { name: 'MEATBALL OF DOOM', color: '#7a3a1a', w: 44, h: 44, pattern: 'skull' },
+  { name: 'PIZZA CUTTER', color: '#e0e0e0', w: 50, h: 20, pattern: 'saw' },
+  { name: 'TOMATO SAUCE GEYSER', color: '#cc2222', w: 25, h: 120, pattern: 'geyser' },
+  { name: 'PARMESAN SHARD', color: '#f4d35e', w: 15, h: 65, pattern: 'spike' },
+  { name: 'MOZZARELLA STRETCH', color: '#fff8dc', w: 8, h: 200, pattern: 'chain' },
 ];
 
 // Combo taunt messages
@@ -29,12 +29,12 @@ export const COMBO_TAUNTS = [
   '',
   '',
   'NOT BAD...',
-  'UNHOLY',
-  'DEMONIC!',
-  'BLASPHEMOUS!!',
-  'SACRILEGE!!!',
-  'GODKILLER!!!!',
-  'BEYOND DEATH!!!!!',
+  'SAUCY!',
+  'EXTRA CHEESE!!',
+  'DELIZIOSO!!!',
+  "CHEF'S KISS!!!!",
+  'PIZZA GOD!!!!!',
+  'LEGENDARY DELIVERY!!!!!',
 ];
 
 // Combo milestone thresholds for visual/audio feedback
