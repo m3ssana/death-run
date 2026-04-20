@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **DEATH.RUN** is a brutal HTML5 horizontal endless runner game. The player runs through hell dodging obstacles (coming from the right) and collecting souls. No build process, no backend — just static files served over HTTP with Phaser 3 loaded via CDN.
 
 - Canvas: 900×650px
-- States: `title`, `playing`, `dead`
+- States: `title`, `story`, `playing`, `dead`
 - External dependency: Phaser 3.60.0 (CDN)
 
 ## Development
@@ -31,13 +31,13 @@ Results appear on the workflow run summary page. Both jobs fail on findings.
 ## Architecture
 
 ```
-index.html          → 3 canvases (#game, #bloom, #ui-overlay), HUD elements, Phaser CDN
-css/style.css       → All styling, animations, HUD layout
+index.html          → 3 canvases (#game, #bloom, #ui-overlay), HUD elements, #story-screen panel, Phaser CDN
+css/style.css       → All styling, animations, HUD layout, story screen styles
 js/main.js          → Entry point: init contexts, generate mountains, create Phaser.Game
-js/config.js        → Phaser config (CANVAS mode, 900x650, scenes)
+js/config.js        → Phaser config (CANVAS mode, 900x650, scenes: TitleScene → StoryScene → GameScene)
 js/state.js         → Central gameState object (all mutable game state lives here)
-js/constants.js     → W, H, HORIZON, VP_X/VP_Y, OBSTACLE_TYPES, COMBO_TAUNTS, helpers (lerp/clamp/rand)
-js/scenes.js        → TitleScene + GameScene (Phaser scenes, input bridge)
+js/constants.js     → W, H, HORIZON, VP_X/VP_Y, OBSTACLE_TYPES, COMBO_TAUNTS, STORY_PAGES, helpers (lerp/clamp/rand)
+js/scenes.js        → TitleScene + StoryScene + GameScene (Phaser scenes, input bridge)
 js/game-loop.js     → update(), startGame(), die(), updateHUD() — core game logic
 js/spawning.js      → spawnObstacle(), spawnSoul()
 js/perspective.js   → worldToScreen() — maps world coords to screen with depth scaling
@@ -80,12 +80,134 @@ Six types defined in `OBSTACLE_TYPES` (constants.js): HELLFIRE PILLAR, DEMON SKU
 - **Shift:** Dash — 60-frame cooldown, 15 frames invincibility
 - Player clamped to `PLAY_LEFT..PLAY_RIGHT` horizontally, `PLAY_TOP..PLAY_BOTTOM` vertically
 
+## Story Screen
+
+A one-time cinematic shown when the player first starts from the title screen. It does **not** replay on restarts from the death screen — the player has earned that context, don't waste their time.
+
+### Flow
+
+```
+TitleScene  →(SPACE/click)→  StoryScene  →(final page advance)→  GameScene
+                                  ↑
+                              (ESC skips)
+                              (not shown on death→restart)
+```
+
+`TitleScene` transitions to `StoryScene` (not `GameScene`). `StoryScene` transitions to `GameScene` after the last page is advanced. The death-screen restart calls `startGame()` directly (already in `GameScene`), so `StoryScene` is bypassed.
+
+### Implementation
+
+**New Phaser scene:** `StoryScene` (key: `'StoryScene'`) in `js/scenes.js`. Add to `config.js` scene list between `TitleScene` and `GameScene`.
+
+**New DOM element** in `index.html` inside `#ui-overlay`, after `#death-screen`:
+
+```html
+<div id="story-screen">
+  <div id="story-headline"></div>
+  <div id="story-body"></div>
+  <div id="story-prompt"></div>
+</div>
+```
+
+**Story pages** defined as `STORY_PAGES` constant in `js/constants.js` — array of `{ headline, body }` objects (see content below). This keeps narrative copy in one place.
+
+**`StoryScene` behavior:**
+- `create()`: set `gameState.state = 'story'`; show `#story-screen`, hide others; load page 0; start typewriter for body text; bind SPACE/click → `advancePage()`, ESC → skip to `GameScene`
+- `update()`: call `drawTitleBG()` each frame so the animated background continues running behind the panel
+- `advancePage()`: if typewriter is mid-type → instantly complete current page text (first press reveals, second press advances); else advance to next page; if past last page → `this.scene.start('GameScene')`
+- `destroy()` / scene shutdown: hide `#story-screen`, clear any typewriter interval
+
+**Typewriter effect:** Reveal body text one character at a time at ~28ms per character using `setInterval`. Store the interval reference on the scene so it can be cancelled on skip or page advance. Track completion with a boolean `this.typewriterDone`.
+
+**Background:** `drawTitleBG()` runs every frame (same as `TitleScene`) — animated floor, ceiling, mountains, and parallax continue behind the story panel.
+
+### Story Pages Content
+
+These are the four pages defined in `STORY_PAGES`. Copy is final — do not alter wording without design approval.
+
+```javascript
+export const STORY_PAGES = [
+  {
+    headline: 'THE PIZZERIA INFERNALE',
+    body: 'Deep beneath the city, a kitchen burns eternal.\n\nEvery pizza made here has cost a runner their soul.\nThe ovens never cool. The cutters never stop.',
+  },
+  {
+    headline: 'YOUR DELIVERY',
+    body: 'The order came in at midnight.\n\n900 meters of infernal kitchen stand between\nyou and the door.\n\nDeliver hot. Deliver alive.',
+  },
+  {
+    headline: 'SURVIVE THE KITCHEN',
+    body: 'ARROW KEYS or WASD — dodge up and down.\nSHIFT — dash through danger (brief invincibility).\n\nCollect the lost pepperoni souls.\nDon\'t stop running.',
+  },
+  {
+    headline: 'THE KITCHEN IS WAITING.',
+    body: '',   // intentionally empty — headline stands alone as a dramatic beat
+  },
+];
+```
+
+### Visual Design
+
+- **Panel**: centered, `max-width: 580px`, dark semi-transparent background `rgba(8,4,14,0.92)`, `2px solid #e63946` border, `box-shadow` matching title/death screen style
+- **Headline** (`#story-headline`): Orbitron font, `#e63946` red, `~22px`, letter-spacing `4px`, uppercase, `text-shadow` glow
+- **Body** (`#story-body`): Orbitron font, `rgba(255,168,72,0.9)` amber, `11px`, `line-height: 2`, `white-space: pre-line` to respect `\n` in copy, `min-height: 120px` to prevent layout jump
+- **Prompt** (`#story-prompt`): cyan `#2a9d8f` pulsing animation (reuse `.pulse` keyframe), `12px`; shows `[ PRESS SPACE ]` while typing, `[ PRESS SPACE TO CONTINUE ]` when done, `[ PRESS SPACE TO BEGIN ]` on the last page
+- **Page indicator** (optional): small dots or `1 / 4` counter bottom-right of panel, amber color
+- **Transition**: no fade — snap show/hide is consistent with the rest of the game's hard-cut style
+
+### CSS additions required (`css/style.css`)
+
+```css
+#story-screen {
+  display: none;
+  max-width: 580px;
+  background: radial-gradient(ellipse at center, rgba(18,8,28,0.93) 0%, rgba(8,4,14,0.96) 100%);
+  padding: 50px 60px;
+  border: 2px solid #e63946;
+  box-shadow: 0 0 60px rgba(230,57,70,0.3), 0 0 120px rgba(255,100,30,0.1), inset 0 0 30px rgba(180,20,20,0.08);
+  text-align: left;
+}
+#story-headline {
+  font-family: 'Orbitron', monospace;
+  font-size: 20px;
+  font-weight: 900;
+  color: #e63946;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  text-shadow: 0 0 20px rgba(230,57,70,0.7), 0 0 40px rgba(230,57,70,0.3);
+  margin-bottom: 28px;
+}
+#story-body {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  color: rgba(255,168,72,0.9);
+  line-height: 2;
+  white-space: pre-line;
+  min-height: 120px;
+  text-shadow: 0 0 10px rgba(255,140,40,0.4);
+  margin-bottom: 36px;
+}
+#story-prompt {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  color: #2a9d8f;
+  letter-spacing: 2px;
+  text-shadow: 0 0 12px rgba(42,157,143,0.65);
+  animation: pulse 1.2s infinite;
+}
+```
+
 ## Manual Testing Checklist
 
 1. Title screen: mountains scroll leftward, title flickers
-2. SPACE/click starts game, HUD appears, player on left side
-3. Obstacles fly in from right, souls appear and drift left
-4. Up/Down dodges vertically, Left/Right adjusts horizontal position
-5. Shift triggers dash with invincibility particles
-6. Collision → death sequence (screen shake, particles, 800ms delay, death screen)
-7. SPACE on death screen restarts
+2. SPACE/click → story screen appears over animated background; title screen hides
+3. Story page 1 typewriters in body text; headline appears immediately
+4. SPACE mid-typewriter → text completes instantly (no second-press needed to advance)
+5. SPACE on complete page → advances to page 2, 3, 4; prompt updates on last page
+6. ESC at any story page → skips directly to game start
+7. SPACE on last story page → game starts, HUD appears, player on left side
+8. Dying and pressing SPACE on death screen → game restarts **without** re-showing story screen
+9. Obstacles fly in from right, souls appear and drift left
+10. Up/Down dodges vertically, Left/Right adjusts horizontal position
+11. Shift triggers dash with invincibility particles
+12. Collision → death sequence (screen shake, particles, 800ms delay, death screen)
