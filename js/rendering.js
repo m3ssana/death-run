@@ -15,11 +15,11 @@ export function draw() {
     ctx.translate(sx, sy);
     gameState.screenShake *= 0.85;
   }
-  ctx.fillStyle = '#0d0810'; // deep dark base
+  ctx.fillStyle = '#fdf0d8'; // warm cream base
   ctx.fillRect(0, 0, W, H);
   drawCeiling();
   drawFloor();
-  drawMountains(); // drawn last so silhouettes sit on top of ceiling/floor at horizon
+  drawMountains(); // drawn last so hills sit on top of ceiling/floor at horizon
   for (const p of gameState.bgParticles) {
     const { sx, sy, scale } = worldToScreen(p.x, p.y);
     ctx.fillStyle = p.color;
@@ -62,19 +62,19 @@ export function draw() {
     gameState.comboFlashAlpha *= 0.80;
     if (gameState.comboFlashAlpha < 0.005) gameState.comboFlashAlpha = 0;
   }
-  // Dark radial vignette — darkens edges, keeps center readable
+  // Subtle vignette — just softens corners, doesn't crush the bright palette
   ctx.globalAlpha = 1;
   const vigGrd = ctx.createRadialGradient(W * 0.38, H / 2, 160, W * 0.38, H / 2, W * 0.78);
   vigGrd.addColorStop(0, 'rgba(0,0,0,0)');
-  vigGrd.addColorStop(1, 'rgba(0,0,0,0.52)');
+  vigGrd.addColorStop(1, 'rgba(0,0,0,0.12)');
   ctx.fillStyle = vigGrd;
   ctx.fillRect(0, 0, W, H);
-  // Heat ember specks drifting leftward from the danger zone on the right
-  ctx.globalAlpha = 0.35;
+  // Flour-dust flecks drifting leftward — kicked up by the chaos in the kitchen
+  ctx.globalAlpha = 0.55;
   for (let i = 0; i < 18; i++) {
     const ex = W - (gameState.frameCount * 0.85 + i * 53) % (W + 50);
     const ey = HORIZON + 45 + (gameState.frameCount * 0.18 + i * 37) % (H - HORIZON - 80);
-    ctx.fillStyle = i % 3 === 0 ? 'rgba(255,200,80,0.9)' : 'rgba(255,110,35,0.7)';
+    ctx.fillStyle = i % 3 === 0 ? 'rgba(255,255,250,0.8)' : 'rgba(250,240,210,0.6)';
     ctx.fillRect(ex, ey, 1.5, 1.5);
   }
   ctx.globalAlpha = 1;
@@ -105,16 +105,16 @@ export function drawBloom() {
 
 export function drawTitleBG() {
   const { ctx, frameCount, lavaGlowPhase, mountainLayers } = gameState;
-  ctx.fillStyle = '#0d0810'; // deep dark base
+  ctx.fillStyle = '#fdf0d8'; // warm cream base
   ctx.fillRect(0, 0, W, H);
   drawCeiling();
   drawFloor();
   drawMountains();
-  // Dark radial vignette
+  // Subtle vignette — just softens corners
   ctx.globalAlpha = 1;
   const fogGrd = ctx.createRadialGradient(W * 0.38, H / 2, 160, W * 0.38, H / 2, W * 0.78);
   fogGrd.addColorStop(0, 'rgba(0,0,0,0)');
-  fogGrd.addColorStop(1, 'rgba(0,0,0,0.52)');
+  fogGrd.addColorStop(1, 'rgba(0,0,0,0.12)');
   ctx.fillStyle = fogGrd;
   ctx.fillRect(0, 0, W, H);
   ctx.globalAlpha = 1;
