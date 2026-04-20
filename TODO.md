@@ -163,16 +163,16 @@ Execution checklist derived from [SPEC.md](./SPEC.md). Work top-to-bottom; each 
 
 ---
 
-## Stage 6 — Obstacle Redraws (`js/obstacles.js`)
+## Stage 6 — Obstacle Redraws (`js/obstacles.js`) ✅ COMPLETE
 
 One `case` at a time, easiest → hardest. After each, playtest that obstacle still spawns and reads correctly.
 
-- [ ] `case 'saw'` → **Pizza Cutter**: silver disc + radial highlights + wooden handle nub
-- [ ] `case 'spike'` → **Parmesan Shard**: tan/yellow wedge, crystalline facets, glossy highlight
-- [ ] `case 'pillar'` → **Oven Flame**: rounded teardrop, yellow→orange→red vertical gradient, gentle bob
-- [ ] `case 'geyser'` → **Tomato Sauce Geyser**: red splash + droplet particles (keep eruption animation)
-- [ ] `case 'chain'` → **Mozzarella Stretch**: cream strand with sag + subtle wobble (KEEP rigid pendulum physics — do not reintroduce per-link wave)
-- [ ] `case 'skull'` → **Meatball of Doom**: rename `drawSkull3D` → `drawMeatball3D`, recolor stops (`#7a3a1a` + darker flecks), add two googly eyes with angled brows
+- [x] `case 'saw'` → **Pizza Cutter**: chrome serrated disc + radial polish lines + fixed wooden handle + metal collar + hub rivet
+- [x] `case 'spike'` → **Parmesan Shard**: tan/yellow wedge, 3 crystalline facet lines, left-edge gloss, tip specular glint, shadow facet
+- [x] `case 'pillar'` → **Oven Flame**: 3-layer teardrop bezier flame with bob, yellow→orange→red gradient, floor glow pool, outer halo
+- [x] `case 'geyser'` → **Tomato Sauce Geyser**: tomato-red eruption column, dark crimson pool, arc droplets, bright core streak
+- [x] `case 'chain'` → **Mozzarella Stretch**: cream cheese color, wet-gloss alternating links, drip teardrop at bottom (rigid pendulum physics preserved)
+- [x] `case 'skull'` → **Meatball of Doom**: `drawSkull3D` renamed → `drawMeatball3D`, brown sphere with herb flecks + gloss + googly eyes with angled menacing brows
 
 ### Stage 6 verification
 - [ ] All 6 obstacles read as their new motif at a glance
