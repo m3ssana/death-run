@@ -45,19 +45,19 @@ export const COMBO_MILESTONES = [5, 10, 25, 50, 100];
 // Empty body on the last page is intentional (headline stands alone).
 export const STORY_PAGES = [
   {
-    headline: 'THE PIZZERIA INFERNALE',
-    body: 'Deep beneath the city, a kitchen burns eternal.\n\nEvery pizza made here has cost a runner their soul.\nThe ovens never cool. The cutters never stop.',
+    headline: "MAMA ROSA'S PIZZERIA",
+    body: "The most famous pizza shop in town is in total chaos!\n\nThe kitchen has gone completely wild \u2014\nflames are flying, cutters are spinning,\nand cheese is EVERYWHERE.",
   },
   {
-    headline: 'YOUR DELIVERY',
-    body: 'The order came in at midnight.\n\n900 meters of infernal kitchen stand between\nyou and the door.\n\nDeliver hot. Deliver alive.',
+    headline: 'THE BIG DELIVERY',
+    body: "A fresh pizza needs to reach the customer HOT!\n\n900 meters of out-of-control kitchen\nstand between you and the exit.\n\nRun fast. Dodge everything. Deliver!",
   },
   {
-    headline: 'SURVIVE THE KITCHEN',
-    body: "ARROW KEYS or WASD \u2014 dodge up and down.\nSHIFT \u2014 dash through danger (brief invincibility).\n\nCollect the lost pepperoni souls.\nDon't stop running.",
+    headline: 'HOW TO PLAY',
+    body: "ARROW KEYS or WASD \u2014 dodge up and down.\nSHIFT \u2014 dash through danger (super speed!).\n\nGrab the flying pepperonis for bonus points.\nDon't stop running!",
   },
   {
-    headline: 'THE KITCHEN IS WAITING.',
+    headline: 'THE KITCHEN AWAITS!',
     body: '',
   },
 ];
