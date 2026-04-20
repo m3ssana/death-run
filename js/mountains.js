@@ -2,40 +2,54 @@ import { gameState } from './state.js';
 import { W, HORIZON } from './constants.js';
 
 /**
- * generateMountains — builds 3 parallax background layers of smooth rolling
- * hills (PIZZA.RUN's family-friendly reskin of the prior hellscape silhouettes).
+ * generateMountains — builds 3 parallax layers of dark architectural
+ * silhouettes that sit at the horizon between the ceiling and floor.
  *
- * Each layer samples a combined sine function instead of random jitter, so the
- * silhouette reads as smooth, rounded hills rather than jagged peaks. Layers
- * are ordered back-to-front by `layer` index (color 0 = lightest/farthest,
- * color 2 = darkest/closest), matching drawMountains()'s color lookup.
+ * Design intent: suggest background structures (ovens, walls, archways) through
+ * silhouette shape without being literally recognizable. Three additive sine
+ * waves at different frequencies and a rectified minimum floor create organic
+ * shapes that feel architectural rather than hilly.
+ *
+ * Layer 0 = farthest (largest peaks, slowest scroll, lightest silhouette)
+ * Layer 2 = nearest  (smaller peaks, fastest scroll, darkest silhouette)
+ *
+ * Peak heights are constrained so the neon ceiling tubes (y ≈ 3–7) stay
+ * visible above the silhouettes at all times.
  */
 export function generateMountains() {
   gameState.mountainLayers = [];
+
   for (let layer = 0; layer < 3; layer++) {
     const pts = [];
-    // Denser sampling on near layers for smoother curvature when rendered
-    const segW = 24 - layer * 6;
-    // Layer-specific wave shape: back hills are longer/lower, front hills
-    // are tighter/taller. Phase offset so layers don't crest in lockstep.
-    const wavelength = 260 - layer * 70;     // back=260, mid=190, front=120
-    const amplitude = 12 + layer * 6;        // back=12, mid=18, front=24
-    const baseH = 16 + layer * 8;            // vertical offset below HORIZON
-    const phase = layer * 1.1;               // stagger layer crests
-    // Secondary wave adds gentle asymmetry so hills don't look mechanical
-    const wave2Len = wavelength * 0.35;
-    const wave2Amp = amplitude * 0.25;
+    const segW = 7;  // fine resolution for smooth silhouette curves
+
+    // Far layers are taller and more spread out; near layers are shorter
+    // and tighter so they don't obstruct the play field near the horizon.
+    const baseH    =  9 + layer * 7;    // rest height above HORIZON:  9 / 16 / 23
+    const amp1     =  5 + layer * 4;    // primary amplitude:          5 /  9 / 13
+    const wave1Len = 210 - layer * 48;  // primary wavelength:       210 / 162 / 114
+    const amp2     = amp1 * 0.38;       // secondary (detail) amplitude
+    const wave2Len = wave1Len * 0.40;   // secondary wavelength (faster oscillation)
+    const amp3     = amp1 * 0.14;       // tertiary (fine surface) amplitude
+    const wave3Len = wave2Len * 0.42;
+    const phase    = layer * 2.2;       // phase stagger so layers don't crest together
+
     for (let x = 0; x <= W * 2 + segW; x += segW) {
-      const w1 = Math.sin((x / wavelength) * Math.PI * 2 + phase) * amplitude;
-      const w2 = Math.sin((x / wave2Len) * Math.PI * 2 + phase * 1.7) * wave2Amp;
-      const y = HORIZON - baseH - amplitude - (w1 + w2);
+      const w1 = Math.sin((x / wave1Len) * Math.PI * 2 + phase)          * amp1;
+      const w2 = Math.sin((x / wave2Len) * Math.PI * 2 + phase * 1.65)   * amp2;
+      const w3 = Math.sin((x / wave3Len) * Math.PI * 2 + phase * 2.85)   * amp3;
+      // Clamp so silhouettes never punch above y=18 (leaves ceiling tubes visible)
+      const y = Math.max(18, HORIZON - baseH - (w1 + w2 + w3));
       pts.push({ x, y });
     }
+
     gameState.mountainLayers.push({
       pts,
-      speed: 0.15 + layer * 0.1,
-      offset: 0,
-      color: layer,
+      // Speed drives parallax: far=0.25, mid=0.35, near=0.45 px/frame
+      speed : 0.25 + layer * 0.10,
+      // Stagger starting offsets so layers aren't in phase on first frame
+      offset: layer * 175,
+      color : layer,
     });
   }
 }

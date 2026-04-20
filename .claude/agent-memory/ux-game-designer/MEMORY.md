@@ -48,6 +48,16 @@
 - Combo number continues past 8 in display even though taunt clips — correct behavior.
 - Design idea: fill index 1 with "STILL ALIVE..." for early acknowledgment at combo=1.
 
+## Background Visual Theme (Dark Inferno Pizzeria — shipped Apr 2026)
+- Base fill: `#0d0810` dark purple-black. CSS body: `#07050c`. Previous cream `#f7e4c4` caused low contrast.
+- **Bug fixed**: mountains were drawn BEFORE ceiling (which fully covered them). Fix: order is now ceiling → floor → mountains.
+- Floor: dark gradient + orange/amber perspective grid converging at VP (W, HORIZON). Pulsing radial oven glow upper-right.
+- Ceiling (55px strip): near-black with 3 neon fluorescent tubes. Two-frequency flicker = organic. Light cones fan toward horizon.
+- Mountains: dark cool-purple silhouettes with orange rim light. Fill extends to HORIZON+26 into floor. Peaks clamped ≥ y=18 so ceiling tubes stay visible.
+- Parallax fixed: `layer.offset += layer.speed` (0.25/0.35/0.45). Was fixed 0.3 for all layers — no parallax before.
+- Vignette: dark radial gradient centered left-of-center (player zone). Heat ember specks drift left across floor.
+- CSS: title/death screen backgrounds dark semi-transparent; HUD panels dark; all amber text labels instead of dark-brown (unreadable on dark bg).
+
 ## Known Follow-ups / Tuning Opportunities
 - Chain hitbox is 30 wide but visible chain is ~6 wide. Tightening to ~12–14 would match visual more fairly.
 - Soul collection radius (30) in world coords — no perspective scaling. Near souls feel too easy, far souls nearly uncollectable. Consider scaling.

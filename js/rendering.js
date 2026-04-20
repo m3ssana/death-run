@@ -15,11 +15,11 @@ export function draw() {
     ctx.translate(sx, sy);
     gameState.screenShake *= 0.85;
   }
-  ctx.fillStyle = '#f7e4c4'; // warm cream base (was #000); ceiling/floor paint over this
+  ctx.fillStyle = '#0d0810'; // deep dark base
   ctx.fillRect(0, 0, W, H);
-  drawMountains();
   drawCeiling();
   drawFloor();
+  drawMountains(); // drawn last so silhouettes sit on top of ceiling/floor at horizon
   for (const p of gameState.bgParticles) {
     const { sx, sy, scale } = worldToScreen(p.x, p.y);
     ctx.fillStyle = p.color;
@@ -62,22 +62,20 @@ export function draw() {
     gameState.comboFlashAlpha *= 0.80;
     if (gameState.comboFlashAlpha < 0.005) gameState.comboFlashAlpha = 0;
   }
-  // Warm cream atmospheric haze from left edge (was black vignette)
-  ctx.globalAlpha = 0.6;
-  const fogGrd = ctx.createLinearGradient(0, 0, W, 0);
-  fogGrd.addColorStop(0, 'rgba(247,228,196,0.55)');
-  fogGrd.addColorStop(0.3, 'rgba(247,228,196,0.2)');
-  fogGrd.addColorStop(0.7, 'rgba(247,228,196,0.05)');
-  fogGrd.addColorStop(1, 'rgba(247,228,196,0)');
-  ctx.fillStyle = fogGrd;
+  // Dark radial vignette — darkens edges, keeps center readable
+  ctx.globalAlpha = 1;
+  const vigGrd = ctx.createRadialGradient(W * 0.38, H / 2, 160, W * 0.38, H / 2, W * 0.78);
+  vigGrd.addColorStop(0, 'rgba(0,0,0,0)');
+  vigGrd.addColorStop(1, 'rgba(0,0,0,0.52)');
+  ctx.fillStyle = vigGrd;
   ctx.fillRect(0, 0, W, H);
-  // Flour dust specks drifting across the scene
-  ctx.fillStyle = 'rgba(255,245,220,0.5)';
-  ctx.globalAlpha = 0.3;
-  for (let i = 0; i < 30; i++) {
-    const gx = (gameState.frameCount * 0.3 + i * 30) % (W + 20) - 10;
-    const gy = (gameState.frameCount * 0.5 + i * 20) % (H + 20) - 10;
-    ctx.fillRect(gx, gy, 2, 2);
+  // Heat ember specks drifting leftward from the danger zone on the right
+  ctx.globalAlpha = 0.35;
+  for (let i = 0; i < 18; i++) {
+    const ex = W - (gameState.frameCount * 0.85 + i * 53) % (W + 50);
+    const ey = HORIZON + 45 + (gameState.frameCount * 0.18 + i * 37) % (H - HORIZON - 80);
+    ctx.fillStyle = i % 3 === 0 ? 'rgba(255,200,80,0.9)' : 'rgba(255,110,35,0.7)';
+    ctx.fillRect(ex, ey, 1.5, 1.5);
   }
   ctx.globalAlpha = 1;
   if (gameState.state === 'playing') drawPlayer();
@@ -107,24 +105,22 @@ export function drawBloom() {
 
 export function drawTitleBG() {
   const { ctx, frameCount, lavaGlowPhase, mountainLayers } = gameState;
-  ctx.fillStyle = '#f7e4c4'; // warm cream (was #000)
+  ctx.fillStyle = '#0d0810'; // deep dark base
   ctx.fillRect(0, 0, W, H);
-  drawMountains();
   drawCeiling();
   drawFloor();
-  // Cream-tinted atmospheric haze (was black vignette)
-  ctx.globalAlpha = 0.6;
-  const fogGrd = ctx.createLinearGradient(0, 0, W, 0);
-  fogGrd.addColorStop(0, 'rgba(247,228,196,0.55)');
-  fogGrd.addColorStop(0.3, 'rgba(247,228,196,0.2)');
-  fogGrd.addColorStop(0.7, 'rgba(247,228,196,0.05)');
-  fogGrd.addColorStop(1, 'rgba(247,228,196,0)');
+  drawMountains();
+  // Dark radial vignette
+  ctx.globalAlpha = 1;
+  const fogGrd = ctx.createRadialGradient(W * 0.38, H / 2, 160, W * 0.38, H / 2, W * 0.78);
+  fogGrd.addColorStop(0, 'rgba(0,0,0,0)');
+  fogGrd.addColorStop(1, 'rgba(0,0,0,0.52)');
   ctx.fillStyle = fogGrd;
   ctx.fillRect(0, 0, W, H);
   ctx.globalAlpha = 1;
   gameState.frameCount++;
   gameState.lavaGlowPhase += 0.02;
   for (const layer of mountainLayers) {
-    layer.offset += 0.3;
+    layer.offset += layer.speed; // parallax: each layer scrolls at its own speed
   }
 }

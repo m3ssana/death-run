@@ -40,8 +40,8 @@ export function updateParticles() {
     if (l.life <= 0) gameState.lightSources.splice(i, 1);
   }
 
-  // Update mountains
+  // Update mountains — use layer.speed for true parallax (far=slow, near=fast)
   for (const layer of gameState.mountainLayers) {
-    layer.offset += 0.3;
+    layer.offset += layer.speed;
   }
 }

@@ -1,211 +1,195 @@
 import { gameState } from './state.js';
-import { W, H, HORIZON, rand, clamp, lerp } from './constants.js';
+import { W, H, HORIZON } from './constants.js';
 
+/**
+ * drawFloor — dark stone floor with a perspective grid that converges at the
+ * right-horizon vanishing point (where obstacles originate). A pulsing oven
+ * glow from the right reinforces the danger-from-right design intent and
+ * creates dramatic warm/cool contrast against the dark base.
+ */
 export function drawFloor() {
-  const { ctx, lavaGlowPhase, frameCount } = gameState;
+  const { ctx, lavaGlowPhase } = gameState;
 
-  // Base pizzeria-tile gradient (yellow toward horizon, deeper toward camera)
+  // Dark stone base — rich dark purple-black, slightly warmer at horizon
   const floorGrd = ctx.createLinearGradient(0, HORIZON, 0, H);
-  floorGrd.addColorStop(0, '#e8b855');
-  floorGrd.addColorStop(0.3, '#d9a441');
-  floorGrd.addColorStop(0.6, '#c8933a');
-  floorGrd.addColorStop(1, '#a8791f');
+  floorGrd.addColorStop(0,   '#17091c');
+  floorGrd.addColorStop(0.4, '#0e050f');
+  floorGrd.addColorStop(1,   '#07030a');
   ctx.fillStyle = floorGrd;
   ctx.fillRect(0, HORIZON, W, H - HORIZON);
 
-  // Checkered tile overlay with quadratic depth compression.
-  // Bands near the horizon are thin and narrow (perspective); bands near the
-  // camera are tall and wide. Cell offset per band creates the checkerboard.
-  // Dark tiles only — the yellow gradient shows through as the "light" tile.
-  const numBands = 11;
-  for (let band = 0; band < numBands; band++) {
-    const t0 = band / numBands;
-    const t1 = (band + 1) / numBands;
-    // Quadratic easing: squaring compresses distant bands toward the horizon.
-    const yTop = HORIZON + t0 * t0 * (H - HORIZON);
-    const yBot = HORIZON + t1 * t1 * (H - HORIZON);
-    const cellW = 26 + band * 9;                // cells widen closer to camera
-    const rowOffset = (band % 2) * cellW;       // alternating offset = checker
-    const alpha = 0.12 + t1 * 0.28;             // more opaque near camera
-    ctx.fillStyle = `rgba(30,18,8,${alpha})`;
-    for (let x = -cellW + rowOffset; x < W; x += cellW * 2) {
-      ctx.fillRect(x, yTop, cellW, yBot - yTop);
-    }
-  }
+  // Oven / danger glow from the right — pulsing warm orange
+  // Positioned at upper-right to suggest the heat source that spawns obstacles
+  const pulse = 0.40 + Math.sin(lavaGlowPhase) * 0.13;
+  const ovenX = W * 0.94;
+  const ovenY = HORIZON + (H - HORIZON) * 0.35;
+  const ovenGlow = ctx.createRadialGradient(ovenX, ovenY, 8, ovenX, ovenY, 640);
+  ovenGlow.addColorStop(0,    `rgba(255,125,28,${pulse})`);
+  ovenGlow.addColorStop(0.22, `rgba(220,65,8,${pulse * 0.42})`);
+  ovenGlow.addColorStop(0.55, 'rgba(160,25,4,0.09)');
+  ovenGlow.addColorStop(1,    'rgba(80,0,0,0)');
+  ctx.fillStyle = ovenGlow;
+  ctx.fillRect(0, HORIZON, W, H - HORIZON);
 
-  // Subtle grout lines between bands (tile seams — horizontal depth)
-  ctx.strokeStyle = 'rgba(60,40,20,0.18)';
-  ctx.lineWidth = 1;
-  for (let band = 1; band < numBands; band++) {
-    const t = band / numBands;
-    const y = HORIZON + t * t * (H - HORIZON);
+  // Perspective grid — lines converge at VP (W, HORIZON) on the right horizon
+  ctx.save();
+
+  // Horizontal depth lines: quadratic spacing so near-camera lines spread out
+  const numH = 10;
+  for (let i = 1; i <= numH; i++) {
+    const t = i / numH;
+    const y = HORIZON + Math.pow(t, 1.75) * (H - HORIZON);
+    const alpha = 0.06 + t * 0.22;
+    ctx.strokeStyle = `rgba(255,140,50,${alpha})`;
+    ctx.lineWidth = 0.4 + t * 1.7;
     ctx.beginPath();
     ctx.moveTo(0, y);
     ctx.lineTo(W, y);
     ctx.stroke();
   }
 
-  // Warm oven-glow pulse (variable retained as lavaGlowPhase for state-continuity)
-  ctx.globalAlpha = 0.25 + Math.sin(lavaGlowPhase) * 0.15;
-  const glowGrd = ctx.createRadialGradient(W / 2, H, 100, W / 2, H - 200, 400);
-  glowGrd.addColorStop(0, 'rgba(255,209,102,0.55)');
-  glowGrd.addColorStop(1, 'rgba(255,180,100,0)');
-  ctx.fillStyle = glowGrd;
-  ctx.fillRect(0, HORIZON, W, H - HORIZON);
-  ctx.globalAlpha = 1;
+  // Vertical perspective lines: fan from VP at (W, HORIZON) to bottom edge
+  // Lines are brightest on the left (player side) and fade toward the right
+  const numV = 16;
+  for (let i = 0; i <= numV; i++) {
+    const bx = (i / numV) * W;
+    const leftBias = 1 - bx / W;              // 1 at left, 0 at right
+    const alpha = 0.05 + leftBias * 0.16;
+    ctx.strokeStyle = `rgba(255,128,42,${alpha})`;
+    ctx.lineWidth = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(bx, H);
+    ctx.lineTo(W, HORIZON);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+
+  // Specular sheen — faint horizontal highlight mid-floor (reflected oven light)
+  const sheenY = HORIZON + (H - HORIZON) * 0.58;
+  const sheen = ctx.createLinearGradient(0, sheenY - 20, 0, sheenY + 28);
+  sheen.addColorStop(0,    'rgba(255,180,90,0)');
+  sheen.addColorStop(0.45, 'rgba(255,215,125,0.055)');
+  sheen.addColorStop(1,    'rgba(255,160,70,0)');
+  ctx.fillStyle = sheen;
+  ctx.fillRect(0, sheenY - 20, W, 48);
 }
 
+/**
+ * drawCeiling — dark overhead strip with flickering neon fluorescent tubes.
+ * Tubes cast downward light cones toward the horizon, framing the play area.
+ * HORIZON is only 55px tall so every element here must be compact but readable.
+ */
 export function drawCeiling() {
   const { ctx, frameCount } = gameState;
 
-  // Cream kitchen ceiling (was stalactite purple/black)
+  // Near-black gradient — cooler at very top, slightly warmer near horizon
   const skyGrd = ctx.createLinearGradient(0, 0, 0, HORIZON);
-  skyGrd.addColorStop(0, '#f4e1c1');
-  skyGrd.addColorStop(0.3, '#e8d2a8');
-  skyGrd.addColorStop(0.7, '#ddc695');
-  skyGrd.addColorStop(1, '#c8b077');
+  skyGrd.addColorStop(0, '#050310');
+  skyGrd.addColorStop(1, '#110821');
   ctx.fillStyle = skyGrd;
   ctx.fillRect(0, 0, W, HORIZON);
 
-  // Hanging kitchen items: alternating pots, pans, and string-light bulbs
-  // sway gently on shared cords (same sin() family as original stalactites to
-  // preserve visual rhythm — only the silhouette changes).
-  const itemCount = 14;
-  for (let i = 0; i < itemCount; i++) {
-    const baseX = ((i + 0.5) / itemCount) * W;
-    // Sway offset — slight horizontal drift gives a breathing "alive" feel
-    const sway = Math.sin(frameCount * 0.03 + i * 0.6) * 2.5;
-    const x = baseX + sway;
-    const cordLen = 14 + Math.sin(frameCount * 0.05 + i) * 3;
+  // Three neon fluorescent tubes with organic two-frequency flicker
+  const tubes = [
+    { cx: W * 0.17, w: 105 },
+    { cx: W * 0.52, w: 138 },
+    { cx: W * 0.84, w:  92 },
+  ];
 
-    // Cord (always drawn — acts as the visual anchor)
-    ctx.strokeStyle = 'rgba(60,40,20,0.55)';
-    ctx.lineWidth = 1;
+  tubes.forEach(({ cx, w }, i) => {
+    const flicker = 0.82
+      + Math.sin(frameCount * 0.09 + i * 3.1) * 0.09
+      + Math.sin(frameCount * 0.27 + i * 1.4) * 0.09;
+
+    // Wide soft halo behind tube — warm amber bloom
+    const halo = ctx.createRadialGradient(cx, 4, 0, cx, 4, 44);
+    halo.addColorStop(0,    `rgba(255,210,100,${0.44 * flicker})`);
+    halo.addColorStop(0.55, `rgba(255,172,62,${0.16 * flicker})`);
+    halo.addColorStop(1,    'rgba(255,130,40,0)');
+    ctx.fillStyle = halo;
+    ctx.fillRect(cx - 44, 0, 88, HORIZON + 8);
+
+    // Tube body
+    ctx.fillStyle = `rgba(255,248,212,${0.96 * flicker})`;
+    ctx.fillRect(cx - w / 2, 3, w, 2.5);
+
+    // Metal endcaps
+    ctx.fillStyle = `rgba(155,125,68,${0.85 * flicker})`;
+    ctx.fillRect(cx - w / 2 - 5, 2, 5, 4.5);
+    ctx.fillRect(cx + w / 2,     2, 5, 4.5);
+
+    // Downward light cone — tapers wider toward horizon
+    const cone = ctx.createLinearGradient(0, 5, 0, HORIZON);
+    cone.addColorStop(0, `rgba(255,210,110,${0.26 * flicker})`);
+    cone.addColorStop(1, 'rgba(255,165,55,0)');
+    ctx.fillStyle = cone;
     ctx.beginPath();
-    ctx.moveTo(baseX, 0);
-    ctx.lineTo(x, cordLen);
-    ctx.stroke();
-
-    const kind = i % 3;
-    if (kind === 0) {
-      // Pot: dark cast-iron trapezoid body with rim + small handle knobs
-      const potW = 14;
-      const potH = 10;
-      const rimH = 2;
-      // Body
-      ctx.fillStyle = '#3a2a1c';
-      ctx.beginPath();
-      ctx.moveTo(x - potW / 2 + 1, cordLen + rimH);
-      ctx.lineTo(x + potW / 2 - 1, cordLen + rimH);
-      ctx.lineTo(x + potW / 2 - 2, cordLen + rimH + potH);
-      ctx.lineTo(x - potW / 2 + 2, cordLen + rimH + potH);
-      ctx.closePath();
-      ctx.fill();
-      // Rim (lighter band on top)
-      ctx.fillStyle = '#5a4030';
-      ctx.fillRect(x - potW / 2, cordLen, potW, rimH);
-      // Side handles
-      ctx.fillStyle = '#2a1e14';
-      ctx.fillRect(x - potW / 2 - 2, cordLen + 2, 2, 3);
-      ctx.fillRect(x + potW / 2, cordLen + 2, 2, 3);
-      // Highlight sheen on pot body
-      ctx.fillStyle = 'rgba(255,220,180,0.15)';
-      ctx.fillRect(x - potW / 2 + 2, cordLen + rimH + 1, 2, potH - 3);
-    } else if (kind === 1) {
-      // Pan: horizontal ellipse with protruding handle
-      const panW = 16;
-      const panH = 4;
-      // Handle (small stick extending right)
-      ctx.fillStyle = '#3a2a1c';
-      ctx.fillRect(x + panW / 2 - 1, cordLen + panH / 2 - 1, 5, 2);
-      // Pan body
-      ctx.fillStyle = '#1f1510';
-      ctx.beginPath();
-      ctx.ellipse(x, cordLen + panH, panW / 2, panH, 0, 0, Math.PI * 2);
-      ctx.fill();
-      // Inner sheen (slight reflected highlight)
-      ctx.fillStyle = 'rgba(200,160,120,0.25)';
-      ctx.beginPath();
-      ctx.ellipse(x - 1, cordLen + panH - 0.5, panW / 3, panH / 2, 0, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      // String-light bulb: small glowing warm sphere with soft halo
-      const bulbR = 2.5;
-      const bulbY = cordLen + bulbR + 1;
-      // Halo (soft warm glow — cheap single radial gradient)
-      const halo = ctx.createRadialGradient(x, bulbY, 0, x, bulbY, bulbR * 4);
-      halo.addColorStop(0, 'rgba(255,220,140,0.55)');
-      halo.addColorStop(1, 'rgba(255,200,100,0)');
-      ctx.fillStyle = halo;
-      ctx.fillRect(x - bulbR * 4, bulbY - bulbR * 4, bulbR * 8, bulbR * 8);
-      // Bulb body
-      ctx.fillStyle = '#ffd98a';
-      ctx.beginPath();
-      ctx.arc(x, bulbY, bulbR, 0, Math.PI * 2);
-      ctx.fill();
-      // Filament highlight
-      ctx.fillStyle = 'rgba(255,255,220,0.9)';
-      ctx.beginPath();
-      ctx.arc(x - 0.5, bulbY - 0.5, 0.8, 0, Math.PI * 2);
-      ctx.fill();
-      // Tiny base/cap
-      ctx.fillStyle = '#3a2a1c';
-      ctx.fillRect(x - 1, cordLen, 2, 1.5);
-    }
-  }
-
-  // Flour-dust drifting down (was warm orange ember dust)
-  ctx.fillStyle = 'rgba(255,245,220,0.18)';
-  for (let i = 0; i < 20; i++) {
-    const px = (frameCount * 0.1 + i * 45) % (W + 10) - 5;
-    const py = (frameCount * 0.3 + i * 30) % HORIZON;
-    ctx.beginPath();
-    ctx.arc(px, py, 0.5, 0, Math.PI * 2);
+    ctx.moveTo(cx - w / 2,      5);
+    ctx.lineTo(cx + w / 2,      5);
+    ctx.lineTo(cx + w / 2 + 24, HORIZON);
+    ctx.lineTo(cx - w / 2 - 24, HORIZON);
+    ctx.closePath();
     ctx.fill();
-  }
+  });
 }
 
+/**
+ * drawMountains — dark architectural silhouettes straddling the horizon.
+ * Drawn AFTER ceiling and floor so they appear as mid-ground depth layer.
+ * Orange rim-lighting from the oven glow gives them a dramatic backlit look.
+ *
+ * Layer ordering: color 0 = farthest (tallest, slowest), color 2 = nearest
+ * (shorter, fastest) — front layers are smaller so they don't occlude gameplay.
+ */
 export function drawMountains() {
   const { ctx, mountainLayers } = gameState;
 
+  // Dark silhouette fills — cool dark purples, nearest layer nearly black
+  const layerFills = [
+    'hsl(262,30%,14%)',   // far:   cool dark purple
+    'hsl(252,22%,9%)',    // mid:   darker
+    'hsl(242,16%,6%)',    // near:  near-black
+  ];
+
   for (const layer of mountainLayers) {
-    // Rolling green hills (was dark hellscape blue silhouettes)
-    const colors = ['#9cc5a1', '#7eb382', '#5e9668'];
-    ctx.fillStyle = colors[layer.color] || '#9cc5a1';
+    ctx.fillStyle = layerFills[layer.color] ?? layerFills[0];
 
     ctx.beginPath();
-    let firstPoint = true;
-    for (let i = 0; i < layer.pts.length; i++) {
-      const pt = layer.pts[i];
+    let first = true;
+    for (const pt of layer.pts) {
       const x = pt.x - layer.offset;
-      const y = pt.y;
-      if (firstPoint) {
-        ctx.moveTo(x, y);
-        firstPoint = false;
-      } else {
-        ctx.lineTo(x, y);
-      }
+      if (first) { ctx.moveTo(x, pt.y); first = false; }
+      else          ctx.lineTo(x, pt.y);
     }
-    ctx.lineTo(W + 50, HORIZON);
-    ctx.lineTo(-50, HORIZON);
+    // Extend slightly into floor so silhouettes look grounded, not floating
+    ctx.lineTo( W + 60, HORIZON + 26);
+    ctx.lineTo(-60,     HORIZON + 26);
     ctx.closePath();
     ctx.fill();
 
-    // Hill edge highlight (sunlit green)
-    ctx.strokeStyle = `rgba(180,220,180,${0.15 + layer.color * 0.05})`;
-    ctx.lineWidth = 1;
+    // Orange rim light on top edge — backlit by the oven behind
+    const rimAlpha = 0.30 - layer.color * 0.07;
+    ctx.save();
+    ctx.strokeStyle = `rgba(255,148,52,${rimAlpha})`;
+    ctx.lineWidth = 1.2;
     ctx.beginPath();
-    firstPoint = true;
+    first = true;
     for (const pt of layer.pts) {
       const x = pt.x - layer.offset;
-      const y = pt.y;
-      if (firstPoint) {
-        ctx.moveTo(x, y);
-        firstPoint = false;
-      } else {
-        ctx.lineTo(x, y);
-      }
+      if (first) { ctx.moveTo(x, pt.y); first = false; }
+      else          ctx.lineTo(x, pt.y);
     }
     ctx.stroke();
+    ctx.restore();
   }
+
+  // Warm horizon glow strip — blends floor, silhouettes, and ceiling together
+  const hGlow = ctx.createLinearGradient(0, HORIZON - 6, 0, HORIZON + 32);
+  hGlow.addColorStop(0,    'rgba(255,158,52,0)');
+  hGlow.addColorStop(0.35, 'rgba(255,185,72,0.30)');
+  hGlow.addColorStop(0.7,  'rgba(255,128,32,0.12)');
+  hGlow.addColorStop(1,    'rgba(255,88,18,0)');
+  ctx.fillStyle = hGlow;
+  ctx.fillRect(0, HORIZON - 6, W, 38);
 }
