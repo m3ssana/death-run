@@ -236,3 +236,64 @@ One-time cinematic lore screen between title and game start. Full spec in `CLAUD
 - [ ] ~~Add audio / SFX~~
 - [ ] ~~Background music~~
 - [ ] ~~Fix pre-existing bugs: dash permanent speed, combo tracks souls not dodges, `demonsDodged` counter~~ (rebrand is behavior-neutral; file separate issues)
+
+---
+
+## Stage 8 — Bright Kitchen Visual Theme (`js/rendering.js`, `js/rendering-helpers.js`, `css/style.css`)
+
+Replace the dark inferno aesthetic with a sunny, bright Italian kitchen. Full spec in `CLAUDE.md §Bright Kitchen Visual Theme`. All changes are rendering-only — zero gameplay/collision/logic changes.
+
+### `js/rendering.js` — `draw()` function
+- [ ] Canvas base fill: `'#0d0810'` → `'#fdf0d8'`
+- [ ] Vignette stop 1: `rgba(0,0,0,0.52)` → `rgba(0,0,0,0.12)` (both radial gradient color stops)
+- [ ] Ember specks fillStyle: `rgba(255,200,80,0.9)` → `rgba(255,255,250,0.8)` (flour-dust white)
+- [ ] Ember specks fillStyle alt: `rgba(255,110,35,0.7)` → `rgba(250,240,210,0.6)` (flour-dust cream)
+
+### `js/rendering.js` — `drawTitleBG()` function
+- [ ] Canvas base fill: `'#0d0810'` → `'#fdf0d8'`
+- [ ] Vignette stop 1: `rgba(0,0,0,0.52)` → `rgba(0,0,0,0.12)`
+
+### `js/rendering-helpers.js` — `drawFloor()`
+- [ ] Base gradient stop 0 (`HORIZON`): `'#17091c'` → `'#f5d070'`
+- [ ] Base gradient stop 1 (0.4): `'#0e050f'` → `'#e8b848'`
+- [ ] Base gradient stop 2 (1.0): `'#07030a'` → `'#d09820'`
+- [ ] Oven glow pulse: `0.40 + Math.sin(lavaGlowPhase) * 0.13` → `0.18 + Math.sin(lavaGlowPhase) * 0.06`
+- [ ] Horizontal grid line strokeStyle: `rgba(255,140,50,${alpha})` → `rgba(140,80,20,${alpha})`
+- [ ] Vertical grid line strokeStyle: `rgba(255,128,42,${alpha})` → `rgba(140,80,20,${alpha})`
+- [ ] Specular sheen stop 1: `rgba(255,215,125,0.055)` → `rgba(255,245,180,0.10)`
+
+### `js/rendering-helpers.js` — `drawCeiling()`
+- [ ] Base gradient stop 0 (top): `'#050310'` → `'#fff8d0'`
+- [ ] Base gradient stop 1 (horizon): `'#110821'` → `'#ffeaa0'`
+- [ ] Tube halo alpha factor: `0.44 * flicker` → `0.30 * flicker`
+- [ ] Light cone color: `rgba(255,210,110,${0.26 * flicker})` → `rgba(200,150,30,${0.18 * flicker})` (amber-brown visible on cream)
+
+### `js/rendering-helpers.js` — `drawMountains()`
+- [ ] `layerFills[0]` (far): `'hsl(262,30%,14%)'` → `'hsl(130,40%,52%)'`
+- [ ] `layerFills[1]` (mid): `'hsl(252,22%,9%)'` → `'hsl(120,35%,42%)'`
+- [ ] `layerFills[2]` (near): `'hsl(242,16%,6%)'` → `'hsl(110,28%,32%)'`
+- [ ] Rim light strokeStyle: `rgba(255,148,52,${rimAlpha})` → `rgba(220,255,180,${rimAlpha})`
+- [ ] Horizon glow stop 0: `'rgba(255,158,52,0)'` → `'rgba(180,230,120,0)'`
+- [ ] Horizon glow stop 1 (0.35): `'rgba(255,185,72,0.30)'` → `'rgba(200,245,140,0.22)'`
+- [ ] Horizon glow stop 2 (0.7): `'rgba(255,128,32,0.12)'` → `'rgba(160,210,100,0.10)'`
+- [ ] Horizon glow stop 3 (1.0): `'rgba(255,88,18,0)'` → `'rgba(120,180,70,0)'`
+
+### `css/style.css`
+- [ ] `body` background: `#07050c` → `#f7e4c4`
+- [ ] `.hud-panel` background: `rgba(8,4,14,0.72)` → `rgba(255,248,215,0.90)`
+- [ ] `.hud-panel` box-shadow: replace `inset 0 0 8px rgba(255,100,30,0.05)` → `inset 0 0 6px rgba(255,200,100,0.12)` (keep outer glow unchanged)
+- [ ] `.hud-label` color: `rgba(255,155,60,0.85)` → `rgba(120,50,8,0.85)` (dark burnt orange, readable on cream)
+- [ ] `.hud-panel.speed .hud-value` color: `#2a9d8f` → `#1a7a6e` (darker teal for cream bg contrast)
+
+### Stage 8 verification
+- [ ] Load game — canvas fills with warm cream, not near-black
+- [ ] Floor reads as bright golden tile with dark brown grout lines
+- [ ] Ceiling reads as bright cream kitchen overhead, tubes still flicker
+- [ ] Mountains read as green rolling hills, not dark silhouettes
+- [ ] HUD panels read as cream cards with dark-colored labels
+- [ ] Title screen: dark overlay still shows over bright animated background
+- [ ] Story screen: dark panel still readable over bright animated background
+- [ ] Death screen: dark overlay still shows correctly
+- [ ] Vignette barely perceptible — just subtle corner softening
+- [ ] Flour-dust specks visible against bright floor (not washed out)
+- [ ] Commit: `visual(bg): bright sunny kitchen — golden floor, cream ceiling, green hills`
