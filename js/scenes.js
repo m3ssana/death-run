@@ -2,6 +2,7 @@ import { gameState } from './state.js';
 import { update } from './game-loop.js';
 import { draw, drawBloom, drawTitleBG } from './rendering.js';
 import { startGame } from './game-loop.js';
+import { STORY_PAGES } from './constants.js';
 
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -15,8 +16,122 @@ export class TitleScene extends Phaser.Scene {
     document.getElementById('title-screen').style.display = 'block';
     document.getElementById('death-screen').style.display = 'none';
     document.getElementById('hud-container').style.display = 'none';
-    this.input.keyboard.on('keydown-SPACE', () => this.scene.start('GameScene'));
-    this.input.on('pointerdown', () => this.scene.start('GameScene'));
+    this.input.keyboard.on('keydown-SPACE', () => this.scene.start('StoryScene'));
+    this.input.on('pointerdown', () => this.scene.start('StoryScene'));
+  }
+
+  update() {
+    drawTitleBG();
+  }
+}
+
+export class StoryScene extends Phaser.Scene {
+  constructor() {
+    super({ key: 'StoryScene' });
+  }
+
+  create() {
+    gameState.state = 'story';
+    document.getElementById('title-screen').style.display = 'none';
+    document.getElementById('death-screen').style.display  = 'none';
+    document.getElementById('hud-container').style.display = 'none';
+    document.getElementById('story-screen').style.display  = 'block';
+
+    this.pageIndex      = 0;
+    this.typewriterDone = false;
+    this.twInterval     = null;
+
+    this.loadPage(0);
+
+    // SPACE or tap → advance (complete text first, then move to next page)
+    this.input.keyboard.on('keydown-SPACE', () => this.advancePage());
+    this.input.on('pointerdown', () => this.advancePage());
+
+    // ESC → skip entire story
+    this.input.keyboard.on('keydown-ESC', () => this.skipToGame());
+
+    // Clean up when scene shuts down
+    this.events.on('shutdown', () => this.cleanup());
+  }
+
+  loadPage(i) {
+    const page = STORY_PAGES[i];
+    document.getElementById('story-headline').textContent = page.headline;
+    document.getElementById('story-body').textContent     = '';
+    this.updatePrompt();
+
+    if (page.body === '') {
+      // Last page has no body — mark done immediately
+      this.typewriterDone = true;
+      this.updatePrompt();
+    } else {
+      this.startTypewriter(page.body);
+    }
+  }
+
+  startTypewriter(text) {
+    clearInterval(this.twInterval);
+    this.typewriterDone = false;
+    this.updatePrompt();
+
+    let charIndex = 0;
+    const el = document.getElementById('story-body');
+    this.twInterval = setInterval(() => {
+      charIndex++;
+      el.textContent = text.slice(0, charIndex);
+      if (charIndex >= text.length) {
+        clearInterval(this.twInterval);
+        this.twInterval     = null;
+        this.typewriterDone = true;
+        this.updatePrompt();
+      }
+    }, 28);
+  }
+
+  finishTypewriter() {
+    clearInterval(this.twInterval);
+    this.twInterval = null;
+    document.getElementById('story-body').textContent = STORY_PAGES[this.pageIndex].body;
+    this.typewriterDone = true;
+    this.updatePrompt();
+  }
+
+  advancePage() {
+    if (!this.typewriterDone) {
+      // First press: reveal full text immediately
+      this.finishTypewriter();
+      return;
+    }
+    if (this.pageIndex < STORY_PAGES.length - 1) {
+      this.pageIndex++;
+      this.loadPage(this.pageIndex);
+    } else {
+      this.skipToGame();
+    }
+  }
+
+  skipToGame() {
+    this.cleanup();
+    this.scene.start('GameScene');
+  }
+
+  cleanup() {
+    clearInterval(this.twInterval);
+    this.twInterval = null;
+    document.getElementById('story-screen').style.display = 'none';
+  }
+
+  updatePrompt() {
+    const isLast = this.pageIndex === STORY_PAGES.length - 1;
+    let text;
+    if (!this.typewriterDone) {
+      text = '[ PRESS SPACE ]';
+    } else if (isLast) {
+      text = '[ PRESS SPACE TO BEGIN ]';
+    } else {
+      text = '[ PRESS SPACE TO CONTINUE ]';
+    }
+    document.getElementById('story-prompt').textContent = text;
   }
 
   update() {

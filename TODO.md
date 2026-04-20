@@ -181,64 +181,28 @@ One `case` at a time, easiest → hardest. After each, playtest that obstacle st
 
 ---
 
-## Stage 7 — Story Screen (`js/constants.js`, `js/config.js`, `js/scenes.js`, `index.html`, `css/style.css`)
+## Stage 7 — Story Screen (`js/constants.js`, `js/config.js`, `js/scenes.js`, `index.html`, `css/style.css`) ✅ COMPLETE
 
 One-time cinematic lore screen between title and game start. Full spec in `CLAUDE.md §Story Screen`.
 
 ### `js/constants.js`
-- [ ] Add `STORY_PAGES` export — array of 4 `{ headline, body }` objects with exact copy from spec
+- [x] Add `STORY_PAGES` export — array of 4 `{ headline, body }` objects with exact copy from spec
 
 ### `js/config.js`
-- [ ] Add `StoryScene` to `scene` array between `TitleScene` and `GameScene`
+- [x] Add `StoryScene` to `scene` array between `TitleScene` and `GameScene`
 
 ### `index.html`
-- [ ] Add `#story-screen` div inside `#ui-overlay` after `#death-screen`:
-  ```html
-  <div id="story-screen">
-    <div id="story-headline"></div>
-    <div id="story-body"></div>
-    <div id="story-prompt"></div>
-  </div>
-  ```
+- [x] Add `#story-screen` div inside `#ui-overlay` after `#death-screen`
 
 ### `css/style.css`
-- [ ] `#story-screen`: `display:none`, `max-width:580px`, dark radial-gradient bg, `2px solid #e63946` border, matching box-shadow, `padding:50px 60px`, `text-align:left`
-- [ ] `#story-headline`: Orbitron 900, `20px`, `#e63946`, `letter-spacing:4px`, uppercase, glow text-shadow, `margin-bottom:28px`
-- [ ] `#story-body`: Orbitron, `11px`, amber `rgba(255,168,72,0.9)`, `line-height:2`, `white-space:pre-line`, `min-height:120px`, `margin-bottom:36px`
-- [ ] `#story-prompt`: Orbitron, `11px`, `#2a9d8f`, `letter-spacing:2px`, `animation:pulse 1.2s infinite`
+- [x] `#story-screen`, `#story-headline`, `#story-body`, `#story-prompt` styles added
 
 ### `js/scenes.js` — `TitleScene` update
-- [ ] SPACE handler: `this.scene.start('GameScene')` → `this.scene.start('StoryScene')`
-- [ ] `pointerdown` handler: same swap
+- [x] SPACE handler → `'StoryScene'`
+- [x] `pointerdown` handler → `'StoryScene'`
 
 ### `js/scenes.js` — `StoryScene` (new class)
-- [ ] Declare `class StoryScene extends Phaser.Scene` with key `'StoryScene'`
-- [ ] `create()`:
-  - Set `gameState.state = 'story'`
-  - Show `#story-screen`; hide `#title-screen`, `#death-screen`, `#hud-container`
-  - Init `this.pageIndex = 0`, `this.typewriterDone = false`, `this.typewriterInterval = null`
-  - Call `this.loadPage(0)`
-  - Bind SPACE/pointerdown → `this.advancePage()`
-  - Bind ESC → `this.skipToGame()`
-  - Register `this.events.on('shutdown', () => this.cleanup())`
-- [ ] `loadPage(i)`:
-  - Set `#story-headline` `.textContent` from `STORY_PAGES[i].headline`
-  - Clear `#story-body` and cancel any running typewriter interval
-  - If `STORY_PAGES[i].body` is empty: set `#story-body` to `''`, mark `this.typewriterDone = true`, set prompt immediately
-  - Else: call `this.startTypewriter(STORY_PAGES[i].body)`
-  - Set `#story-prompt` to `[ PRESS SPACE ]`
-- [ ] `startTypewriter(text)`:
-  - `clearInterval(this.typewriterInterval)`; `this.typewriterDone = false`
-  - Reveal one char every 28ms via `setInterval`; write to `#story-body`.textContent
-  - On completion: `clearInterval`; set `this.typewriterDone = true`; update prompt to `[ PRESS SPACE TO CONTINUE ]` (or `[ PRESS SPACE TO BEGIN ]` if on last page)
-- [ ] `finishTypewriter(fullText)`: `clearInterval`; set `#story-body` to full text; `this.typewriterDone = true`; update prompt
-- [ ] `advancePage()`:
-  - If `!this.typewriterDone`: call `this.finishTypewriter(STORY_PAGES[this.pageIndex].body)`; return (first press completes, second press advances)
-  - Else if `this.pageIndex < STORY_PAGES.length - 1`: `this.pageIndex++`; `this.loadPage(this.pageIndex)`
-  - Else: `this.skipToGame()`
-- [ ] `skipToGame()`: `this.cleanup()`; `this.scene.start('GameScene')`
-- [ ] `cleanup()`: `clearInterval(this.typewriterInterval)`; `document.getElementById('story-screen').style.display = 'none'`
-- [ ] `update()`: call `drawTitleBG()` each frame (animated background continues behind panel)
+- [x] Full `StoryScene` class: `create`, `loadPage`, `startTypewriter`, `finishTypewriter`, `advancePage`, `skipToGame`, `cleanup`, `updatePrompt`, `update`
 
 ### Stage 7 verification
 - [ ] Title SPACE/click → story screen appears; animated background runs behind it
@@ -250,7 +214,6 @@ One-time cinematic lore screen between title and game start. Full spec in `CLAUD
 - [ ] ESC from any page → game starts immediately, no story screen visible
 - [ ] SPACE on page 4 → game starts; HUD appears; story screen hidden
 - [ ] Die → SPACE on death screen → game restarts, no story screen shown
-- [ ] Commit: `feat(story): cinematic lore screen between title and game`
 
 ---
 

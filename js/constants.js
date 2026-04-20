@@ -40,6 +40,28 @@ export const COMBO_TAUNTS = [
 // Combo milestone thresholds for visual/audio feedback
 export const COMBO_MILESTONES = [5, 10, 25, 50, 100];
 
+// Story screen pages — shown once between title and first game start.
+// headline: displayed immediately. body: typewritten at 28ms/char.
+// Empty body on the last page is intentional (headline stands alone).
+export const STORY_PAGES = [
+  {
+    headline: 'THE PIZZERIA INFERNALE',
+    body: 'Deep beneath the city, a kitchen burns eternal.\n\nEvery pizza made here has cost a runner their soul.\nThe ovens never cool. The cutters never stop.',
+  },
+  {
+    headline: 'YOUR DELIVERY',
+    body: 'The order came in at midnight.\n\n900 meters of infernal kitchen stand between\nyou and the door.\n\nDeliver hot. Deliver alive.',
+  },
+  {
+    headline: 'SURVIVE THE KITCHEN',
+    body: "ARROW KEYS or WASD \u2014 dodge up and down.\nSHIFT \u2014 dash through danger (brief invincibility).\n\nCollect the lost pepperoni souls.\nDon't stop running.",
+  },
+  {
+    headline: 'THE KITCHEN IS WAITING.',
+    body: '',
+  },
+];
+
 // Helper functions
 export function lerp(a, b, t) {
   return a + (b - a) * t;

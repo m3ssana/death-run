@@ -119,6 +119,47 @@ canvas {
   letter-spacing: 2px;
 }
 
+/* ===== STORY SCREEN ===== */
+#story-screen {
+  display: none;
+  max-width: 580px;
+  width: 90%;
+  background: radial-gradient(ellipse at center, rgba(18,8,28,0.93) 0%, rgba(8,4,14,0.96) 100%);
+  padding: 50px 60px;
+  border: 2px solid #e63946;
+  box-shadow: 0 0 60px rgba(230,57,70,0.3), 0 0 120px rgba(255,100,30,0.1), inset 0 0 30px rgba(180,20,20,0.08);
+  text-align: left;
+  pointer-events: none;
+}
+#story-headline {
+  font-family: 'Orbitron', monospace;
+  font-size: 20px;
+  font-weight: 900;
+  color: #e63946;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  text-shadow: 0 0 20px rgba(230,57,70,0.7), 0 0 40px rgba(230,57,70,0.3);
+  margin-bottom: 28px;
+}
+#story-body {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  color: rgba(255,168,72,0.9);
+  line-height: 2;
+  white-space: pre-line;
+  min-height: 120px;
+  text-shadow: 0 0 10px rgba(255,140,40,0.4);
+  margin-bottom: 36px;
+}
+#story-prompt {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  color: #2a9d8f;
+  letter-spacing: 2px;
+  text-shadow: 0 0 12px rgba(42,157,143,0.65);
+  animation: pulse 1.2s infinite;
+}
+
 /* ===== HUD ===== */
 #hud-container {
   position: absolute;
